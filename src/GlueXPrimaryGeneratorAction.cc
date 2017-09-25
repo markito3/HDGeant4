@@ -113,13 +113,18 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
          fGunParticle.pdgType = 999999;
          fGunParticle.partDef = fParticleTable->FindParticle("chargedgeantino");
       }
+      else if (kinepars[1] == 1050) {
+         fGunParticle.geantType = 0;
+         fGunParticle.pdgType = 999999;
+         fGunParticle.partDef = fParticleTable->FindParticle("opticalphoton");
+      }
       else {
-         if (kinepars[1] > 100)
-            fGunParticle.geantType = kinepars[1] - 100;
-         else
-            fGunParticle.geantType = kinepars[1];
-         fGunParticle.pdgType = ConvertGeant3ToPdg(fGunParticle.geantType);
-         fGunParticle.partDef = fParticleTable->FindParticle(fGunParticle.pdgType);
+	if (kinepars[1] > 100)
+	  fGunParticle.geantType = kinepars[1] - 100;
+	else
+	  fGunParticle.geantType = kinepars[1];
+          fGunParticle.pdgType = ConvertGeant3ToPdg(fGunParticle.geantType);
+          fGunParticle.partDef = fParticleTable->FindParticle(fGunParticle.pdgType);
       }
       if (fGunParticle.partDef == 0) {   
          G4cerr << "GlueXPrimaryGeneratorAction constructor error - "
