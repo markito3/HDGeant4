@@ -117,7 +117,11 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
          fGunParticle.geantType = 0;
          fGunParticle.pdgType = 999999;
          fGunParticle.partDef = fParticleTable->FindParticle("opticalphoton");
+<<<<<<< HEAD
       }
+=======
+      }            
+>>>>>>> upstream/dirc_rd
       else {
 	if (kinepars[1] > 100)
 	  fGunParticle.geantType = kinepars[1] - 100;
