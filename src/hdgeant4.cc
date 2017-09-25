@@ -46,6 +46,8 @@ void usage()
    exit(9);
 }
 
+void OpenGLXpreload();
+
 int main(int argc,char** argv)
 {
    // Initialize the jana framework
@@ -72,6 +74,13 @@ int main(int argc,char** argv)
       }
    }
 
+   // Initialize the graphics subsystem, if requested
+   if (use_visualization) {
+#ifdef G4VIS_USE
+      OpenGLXpreload();
+#endif
+   }
+
    // Read user options from file control.in
    GlueXUserOptions opts;
    if (! opts.ReadControl_in("control.in")) {
@@ -85,8 +94,8 @@ int main(int argc,char** argv)
       else {
          G4cerr << "Warning - "
                 << "no run number specified in control.in, "
-                << "default value of 9000 assumed." << G4endl;
-         run_number = 9000;
+                << "default value of 0 assumed." << G4endl;
+         run_number = 0;
       }
    }
 
@@ -127,6 +136,13 @@ int main(int argc,char** argv)
 #else
    G4RunManager runManager;
 #endif
+
+	// Let user turn off geometry optimization for faster startup
+	// (and slower running)
+	std::map<int, int> geomopt;
+	if ( opts.Find("GEOMOPT", geomopt) ) {
+         if( geomopt[1] == 0 ) runManager.SetGeometryToBeOptimized( false );
+	}
 
    // Geometry initialization
    GlueXDetectorConstruction *geometry = new GlueXDetectorConstruction();

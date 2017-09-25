@@ -92,8 +92,8 @@ GlueXPhotonBeamGenerator::GlueXPhotonBeamGenerator(CobremsGeneration *gen)
    // warnings about Pcut violations.
 
    double raddz = fCobrems->getTargetThickness() * m;
-   fCoherentPDFx.Pcut = .003 * (raddz / 20e-6);
-   fIncoherentPDFlogx.Pcut = .003 * (raddz / 20e-6);
+   fCoherentPDFx.Pcut = .003 * (raddz / (20e-6 * m));
+   fIncoherentPDFlogx.Pcut = .003 * (raddz / (20e-6 * m));
 
    prepareImportanceSamplingPDFs();
 }
@@ -158,6 +158,7 @@ void GlueXPhotonBeamGenerator::prepareImportanceSamplingPDFs()
       fIncoherentPDFlogx.density[i] /= sum * dlogx;
       fIncoherentPDFlogx.integral[i] /= sum;
    }
+   fIncoherentPDFlogx.Pcut = 2 * sum * dlogx;
  
    // Compute approximate PDF for dNi/dy
    fIncoherentPDFtheta02 = 1.8;
@@ -292,7 +293,7 @@ void GlueXPhotonBeamGenerator::GenerateBeamPhoton(G4Event* anEvent, double t0)
    double thetax = thxBeam + thxMS - targetThetax - thxMosaic;
    double thetay = thyBeam + thyMS - targetThetay - thyMosaic;
    double thetaz = -targetThetaz;
-   fCobrems->setTargetOrientation(thetax, thetay, thetaz);
+   fCobrems->setTargetOrientation(thetax/radian, thetay/radian, thetaz/radian);
 
    // Generate with importance sampling
    double x = 0;
@@ -304,7 +305,7 @@ void GlueXPhotonBeamGenerator::GenerateBeamPhoton(G4Event* anEvent, double t0)
    double Sincoherent = fIncoherentPDFlogx.Npassed *
                        (fIncoherentPDFlogx.Ntested /
                        (fIncoherentPDFlogx.Psum + 1e-99));
-   if (Scoherent < Sincoherent) {
+   if (targetThetax != 0 && Scoherent < Sincoherent) {
       while (true) {                             // try coherent generation
          ++fCoherentPDFx.Ntested;
 
@@ -404,7 +405,7 @@ void GlueXPhotonBeamGenerator::GenerateBeamPhoton(G4Event* anEvent, double t0)
          ++fIncoherentPDFlogx.Npassed;
 
          phi = 2*M_PI * G4UniformRand();
-         polarization = 0;
+         polarization = fCobrems->AbremsPolarization(x, theta2, phi);
          break;
       }
    }
@@ -430,9 +431,9 @@ void GlueXPhotonBeamGenerator::GenerateBeamPhoton(G4Event* anEvent, double t0)
 #endif
 
    // Put the radiator back the way you found it
-   fCobrems->setTargetOrientation(targetThetax,
-                                  targetThetay,
-                                  targetThetaz);
+   fCobrems->setTargetOrientation(targetThetax/radian,
+                                  targetThetay/radian,
+                                  targetThetaz/radian);
 
    // Define the particle kinematics and polarization in lab coordinates
    G4ParticleDefinition *part = GlueXPrimaryGeneratorAction::GetParticle("gamma");
@@ -531,16 +532,18 @@ double GlueXPhotonBeamGenerator::GenerateTriggerTime(const G4Event *event)
 {
    // The primary interaction vertex time is referenced to a clock
    // whose t=0 is synchronized to the crossing of a beam bunch
-   // through the target midplane. This beam bunch may not contain
-   // the beam particle whose interaction generated the vertex,
-   // but it represents best-guess based on the arrival time of
-   // the L1 trigger signal. The spread in the L1 relative to the
+   // through the clock reference plane. This beam bunch may not
+   // contain the beam particle whose interaction generated the
+   // vertex, but it represents best-guess based on the arrival time
+   // of the L1 trigger signal. The spread in the L1 relative to the
    // interacting bunch time is parameterized as a Gaussian.
 
    extern int run_number;
    static int last_run_number = 0;
    if (run_number != last_run_number) {
       fBeamBucketPeriod = getBeamBucketPeriod(run_number);
+      double refZ = getRFreferencePlaneZ(run_number);
+      GlueXPrimaryGeneratorAction::setRFreferencePlaneZ(refZ);
       last_run_number = run_number;
    }
    double L1sigmat = GlueXPrimaryGeneratorAction::getL1triggerTimeSigma();
@@ -604,4 +607,37 @@ double GlueXPhotonBeamGenerator::getBeamBucketPeriod(int runno)
       }
    }
    return fBeamBucketPeriod;
+}
+
+double GlueXPhotonBeamGenerator::getRFreferencePlaneZ(int runno)
+{
+   // Look up the reference plane Z for this run in ccdb
+   // unless the user has already set the value by hand.
+
+   double refZ = 65 * cm;
+
+   if (runno > 0) {
+      jana::JCalibration *jcalib = japp->GetJCalibration(runno);
+      G4cout << "JCalibration context: " << jcalib->GetContext()
+             << G4endl;
+      std::map<std::string, double> result;
+      std::string map_key("/PHOTON_BEAM/RF/reference_plane_z");
+      if (jcalib->Get(map_key, result)) {
+         G4cerr << "Error in GlueXPhotonBeamGenerator::getRFreferencePlaneZ"
+                << " - error fetching " << map_key << " from ccdb, "
+                << "keeping default value " << refZ / cm << " cm." << G4endl;
+      }
+      else if (result.find("z_position") != result.end()) {
+         refZ = result["z_position"] * cm;
+         G4cout << "Info: RF reference plane set to " << refZ / cm << " cm."
+                << G4endl;
+      }
+      else {
+         G4cerr << "Error in GlueXPhotonBeamGenerator::getRFreferencePlaneZ"
+                << " - error finding value for " << map_key
+                << " in ccdb, cannot continue." << G4endl;
+         exit(-1);
+      }
+   }
+   return refZ;
 }
