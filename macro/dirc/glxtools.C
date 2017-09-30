@@ -60,6 +60,7 @@ TH2F*    glx_hdigi[glx_npmt];
 TPad*    glx_hpads[glx_npmt];
 TPad*    glx_hpglobal;
 TCanvas* glx_cdigi;
+TClonesArray* glx_events;
 
 TString glx_drawDigi(TString digidata="", Int_t layoutId = 0, Double_t maxz = 0, Double_t minz = 0){
   if(!glx_cdigi) glx_cdigi = new TCanvas("glx_cdigi","glx_cdigi",800,350);
@@ -369,6 +370,23 @@ bool glx_init(TString inFile="../build/hits.root", Int_t bdigi=0, TString savepa
   return true;
 }
 
+bool glx_initc(TString inFile="../build/hits.root", Int_t bdigi=0, TString savepath=""){
+  if(inFile=="") return false;
+  if(savepath!="") glx_savepath=savepath;
+  glx_setRootPalette(1);
+  delete glx_ch;
+
+  glx_ch = new TChain("dirc");
+  glx_ch->Add(inFile);
+  glx_events = new TClonesArray("DrcEvent");
+  glx_ch->SetBranchAddress("DrcEvent", &glx_events);
+  
+  glx_entries = glx_ch->GetEntries();
+  std::cout<<"Entries in chain:  "<<glx_entries <<std::endl;
+  if(bdigi == 1) glx_initDigi();
+  return true;
+}
+
 void glx_nextEvent(Int_t ievent, Int_t printstep){
   glx_ch->GetEntry(ievent);
   if(ievent%printstep==0 && ievent!=0) cout<<"Event # "<<ievent<< " # hits "<<glx_event->GetHitSize()<<endl;
@@ -389,6 +407,26 @@ void glx_nextEvent(Int_t ievent, Int_t printstep){
     glx_phi=glx_event->GetMomentum().Phi()*180/TMath::Pi();
   }
 }
+
+void glx_nextEventc(Int_t ievent,Int_t itrack, Int_t printstep){
+  if(ievent%printstep==0 && ievent!=0 && itrack==0) cout<<"Event # "<<ievent<< " # hits "<<glx_event->GetHitSize()<<endl;
+  glx_event= (DrcEvent*) glx_events->At(itrack);
+  if(ievent == 0 && itrack==0 && gROOT->GetApplication()){
+    TIter next(gROOT->GetApplication()->InputFiles());
+    TObjString *os=0;
+    while((os = (TObjString*)next())){
+      glx_info += os->GetString()+" ";
+    }
+    glx_info += "\n";
+  }
+  glx_momentum = glx_event->GetMomentum().Mag() +0.01;    
+  glx_pdg =  glx_event->GetPdg();
+  glx_test1 = glx_event->GetTest1();
+  glx_test2 = glx_event->GetTest2();
+  glx_theta=glx_event->GetMomentum().Theta()*180/TMath::Pi();
+  glx_phi=glx_event->GetMomentum().Phi()*180/TMath::Pi();
+}
+
 #endif
 
 TString glx_randStr(Int_t len = 10){
