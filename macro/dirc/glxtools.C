@@ -49,7 +49,7 @@ class DrcHit;
 DrcEvent* glx_event(0);
 #endif
 
-const Int_t  glx_nrow(6),glx_ncol(17);
+const Int_t  glx_nrow(6),glx_ncol(18);
 const Int_t  glx_npmt(glx_nrow*glx_ncol);
 
 TChain*  glx_ch(0);
@@ -138,7 +138,7 @@ TString glx_drawDigi(TString digidata="", Int_t layoutId = 0, Double_t maxz = 0,
   glx_hdigi[nnmax]->GetZaxis()->SetLabelSize(0.06);
 
   for(Int_t m=0; m<nrow*ncol;m++){
-    Int_t nm=(5-m%6)*17 + m/6;
+    Int_t nm=(5-m%6)*glx_ncol + m/6;
     glx_hpads[m]->cd();
     glx_hdigi[nm]->Draw("col");
     if(maxz==-1)  max = glx_hdigi[nm]->GetBinContent(glx_hdigi[nm]->GetMaximumBin());

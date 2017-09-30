@@ -155,11 +155,11 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
       pmthit.y_cm = x[1]/cm;
       pmthit.z_cm = x[2]/cm;
       
-      G4double box = touch_hist->GetReplicaNumber(3);   // [1,2]
-      G4double pmt = touch_hist->GetReplicaNumber(1)-1; // [0,101]
+      G4double box = touch_hist->GetReplicaNumber(3)-1; // [0,1]
+      G4double pmt = touch_hist->GetReplicaNumber(1)-1; // [0,107]
       G4double pix = touch_hist->GetReplicaNumber(0)-1; // [0,63]
 
-      pmthit.ch = box*pmt*64+pix;
+      pmthit.ch = (box*108+pmt)*64+pix;
       pmthit.key_bar = fHitsBar.size()-1;
       fHitsPmt.push_back(pmthit);
     }else {

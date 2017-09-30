@@ -113,7 +113,7 @@ c TLOG 1
 c
 c   particle  momentum  theta  phi  delta_momentum delta_theta delta_phi
 cKINE   1050  0.000000003   90.  0.      0.            0.        0.
-KINE     114      4.      5.  -90.      0.            0.        0.
+KINE     114      4.      5.  90.      0.            0.        0.
 
 c The SCAP card determines the vertex position for the particle gun.  It
 c supports the following three arguments, all of which default to 0.
