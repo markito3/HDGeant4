@@ -10,6 +10,7 @@ void drawHP(TString infile="drc.root"){
     glx_ch->GetEntry(e);
     for (Int_t t=0; t<glx_events->GetEntriesFast(); t++){
       glx_nextEventc(e,t,10);
+      if(glx_event->GetParent()>0) continue;
       for(Int_t h=0; h<glx_event->GetHitSize(); h++){
     	hit = glx_event->GetHit(h);
     	Int_t pmt = hit.GetPmtId();
