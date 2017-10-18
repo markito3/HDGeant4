@@ -1,151 +1,49 @@
-c This is the control file for the GEANT simulation.  Parameters defined
-c in this file control the kind and extent of simulation that is performed.
-c The full list of options is given in section BASE-40 of the GEANT manual.
-c
-c In addition, some new cards have been defined to set up the input source
-c for the simulation.  Three kinds of simulation runs are available, selected
-c by which of the following three "cards" are present below.
-c    1. Input from Monte Carlo generator (card INFILE)
-c    2. Built-in coherent bremsstrahlung source (card BEAM)
-c    3. Built-in single-track event generator (card KINE)
-c The order of the list is significant, that is if INFILE is present then the
-c BEAM and KINE cards are ignored, otherwise if BEAM is present then KINE is
-c ignored.  For example, the 3-card sequence:
-c     INFILE 'phi-1680.hddm'
-c     SKIP 25
-c     TRIG 100
-c instructs HDGeant to open ./phi-1680.hddm, skip the first 25 events and then
-c process the following 100 input events and stop.  If the end of the file is
-c reached before the event count specified in card TRIG is exhausted then the
-c processing will stop at the end of file.
-c INFILE 'bggen.hddm'
+c INFILE 'bggen_500k.hddm'
 c INFILE 'genp_pi0.hddm'
-TRIG 5
-c RUNG 9001
 
-c The BEAM card configures the built-in coherent bremsstralung photon
-c beam generator in HDGeant.  If the INFILE card is not present and BEAM
-c is specified, the internal coherent bremsstralung generator is the primary
-c source of events for the simulation.  If INFILE is specified, the primary
-c event source is the external Monte Carlo generator that produced the file,
-c but the BEAM card may still be present, and it is needed if beam-related
-c backgrounds are being superimposed on top of the primary event signals,
-c as requested with the BGRATE card (see below).  The beam card accepts
-c the following five parameters.  
-c      Emax   - end-point energy of the electron beam (GeV)
-c      Epeak  - energy of the primary coherent peak edge (GeV)
-c      Emin   - minimum energy of the coherent bremsstrahlung beam (GeV)
-c      collz  - z position of collimator in m
-c      colld  - diameter of collimator in m 
-c      Eemit  - electron beam emittance in m.rad
-c      radthick - dimaond radiator thickneess in m
-c Omitting the final parameter Emin results in the default value being used.
-c BEAM 12. 9.0 0.0012 76.00 0.005 10.e-9 20.e-6
+INFILE 'generated_hprime2600.hddm'
+OUTFILE 'sim_hprime2600.hddm'
 
-c The GENBEAM card configures the simulation program to act purely as a
-c Monte Carlo event generator, and not to actually track any of the particles
-c that it generates. The events are written to the output file with only the
-c MC section filled out (reactions tag). This file can be fed back later to
-c HDGeant using the INFILE card above to carry out the actual simulation.
-c This provides access to the built-in photon beam generator of HDGeant to
-c someone who wants to study the properties of the beam apart from its
-c interactions in the target. Three keywords are currently supported.
-c    'precol'   - single-photon events starting upstream of the primary
-c                 collimator, with correlated spatial and momentum 
-c                 distributions for the well-tuned GlueX beamline.
-c    'postcol'  - single-photon events starting downstream of the secondary
-c                 collimator. Beam photons have been tracked through the 
-c                 system of collimators and sweep magnets but then stopped
-c                 before entry into the pair spectrometer.
-c    'postconv' - e+e- pair and e+e-/e-recoil events generated in the
-c                 TPOL target. Beam photons have been tracked through
-c                 the system of collimators and then pair-converted in
-c                 the TPOL coverter using a custom polarization-sensitive
-c                 pair/triplet production generator. They are saved as
-c                 a single vertex within the PTAR target.
-c The first two modes are supported by both HDGeant and HDGeant4, while
-c postconv is only supported at present by HDGeant4.
-c GENBEAM 'postconv'
+c TRIG 100
 
-c Commenting out the following line will disable simulated hits output.
-OUTFILE 'out.hddm'
 
-c The following are used to automatically invoke the mcsmear program
-c to do the final stage digitization of hits after the simulation
-c stage is complete. This simply invokes the mcsmear program passing
-c it any optional arguments supplied here and then optionally deletes
-c the OUTFILE specified above leaving only the smeared file. This stage
-c can be invoked by hand afterwards, but having it done automatically
-c here allows hdgeant and mcsmear to function as though it were a single
-c program. The specific keys are as follows.
-c
+
 c POSTSMEAR  - set this 1 to auto-invoke the mcsmear program and 0 to not
-c DELETEUNSMEARED - set this to 1 to delete the OUTFILE after running mcsmear
-c MCSMEAROPTS - String to specify additional arguments to pass to mcsmear
 POSTSMEAR 0
 DELETEUNSMEARED 0
-c MCSMEAROPTS '-t1000 -d0'
 
-c The following card enables single-track generation (for testing).
-c For a single-particle gun, set the momentum (GeV/c), direction
-c theta,phi (degrees) and vertex position (cm), and for the particle
-c type insert the Geant particle type code plus 100 (eg. 101=gamma,
-c 103=electron, 107=pi0, 108=pi+, 109=pi-, 114=proton).  If you use
-c the particle code but do not add 100 then theta,phi are ignored
-c and the particle direction is generated randomly over 4pi sr.
-c For a listing of the Geant particle types, see the following URL.
-c http://wwwasdoc.web.cern.ch/wwwasdoc/geant_html3/node72.html
-c The meaning of the arguments to KINE are as follows.
-c  - particle = GEANT particle type of primary track + 100
-c  - momentum = initial track momentum, central value (GeV/c)
-c  - theta = initial track polar angle, central value (degrees)
-c  - phi = initial track azimuthal angle, central value (degrees)
-c  - delta_momentum = spread in initial track momentum, full width (GeV/c)
-c  - delta_theta = spread in initial track polar angle, full width (degrees)
-c  - delta_phi = spread in initial track azimuthal angle, full width (degrees)
-c
-c If you do explicitly specify the momentum/angle (by adding 100 as
-c described above, you may also choose to distibute tracks evenly in
-c log(P) or log(theta) by setting the appropriate PLOG and TLOG flags
-c to a non-zero value.
-c PLOG 1
-c TLOG 1
-c
-c   particle  momentum  theta  phi  delta_momentum delta_theta delta_phi
-cKINE   1050  0.000000003   90.  0.      0.            0.        0.
-KINE     114      4.      5.  -90.      0.            0.        0.
 
-c The SCAP card determines the vertex position for the particle gun.  It
-c supports the following three arguments, all of which default to 0.
-c
-c    vertex_x vertex_y vertex_z
-cSCAP    0.      -44.4      595.5
-SCAP    0.      0.      65.
+c particle  momentum  theta  phi  delta_momentum delta_theta delta_phi
+c KINE    1050  0.000000003   90.  0.      0.            0.        0.
+c KINE     114      4.       5.  -90.      0.            0.        0.
+c KINE     112      4.       6.    0.      0.            10.        360.
 
-c The TGTWIDTH card is used to determine an extended volume from
-c which the particle gun will generate vertexes. The vertex position
-c is sampled evenly from a cylindrical volume whose radius is given
-c by the first parameter and whose full z-extent is given by the second.
-c The volume is centered on the coordinates specified by SCAP above.
-c If the card is not specified, then both the r and z extent default
-c to zero meaning the vertex is always located at the point specified
-c by SCAP. Note that this only affects the particle gun. Events read
-c from a file contain their own vertex information.
-c
+c The SCAP card determines the vertex position for the particle gun.
+c vertex_x vertex_y vertex_z (default 0,0,0)
+c SCAP    0.      -44.4      595.5
+c SCAP    0.      0.      65.
+
 c            vertex_extent_r  vertex_extent_z
-TGTWIDTH           0.0              0.
+c TGTWIDTH           0.0              0.
 
-c If you specify a non-zero value for vertex_x and/or vertex_y above then
-c all tracks will emerge from the given point.  If you leave them at zero,
-c you have the option of specifying the HALO card which causes the simulation
-c to generate events with a transverse profile modeled after the 12 GeV
-c electron beam.  The argument only argument to HALO is fhalo, the fraction
-c of the beam that lies in the halo region surrounding the core gaussian.
-c The nominal value taken from CASA technical note JLAB-TN-06-048 is 5e-5.
-c This card is only effective for electron beam simulations with gxtwist.
-c
 c    fhalo
 HALO  5e-5
+
+
+c The following card tells the simulation to store particle trajectories
+c in the event output stream.  This output can be verbose, use with caution.
+c The value set here determines the amount of output recorded:
+c
+c TRAJECTORIES = 0  don't store trajectory info
+c TRAJECTORIES = 1  store birth and death points of primary tracks
+c TRAJECTORIES = 2  store birth and death points of all particles
+c TRAJECTORIES = 3  store full trajectory of primary tracks
+c TRAJECTORIES = 4  store full trajectory of primary tracks and birth/death points of secondaries
+c TRAJECTORIES = 5  store full trajectory for all particles
+c
+TRAJECTORIES 0
+
+
 
 c The following lines control the rate (GHz) of background beam photons
 c that are overlayed on each event in the simulation, in addition to the
@@ -211,65 +109,8 @@ c this line is commented out, a default value of 10ns is assumed. The
 c decimal point is significant.
 TREFSIGMA 10.
 
-c The following card seeds the random number generator, though it may be
-c overridden if seeds are found in the input file (see below). It must be
-c unique for each run.  There are two ways to specify the random seed here.
-c  1. One argument, must be an integer in the range [1,215]
-c  2. Two arguments, must be a pair of positive Integer*4 numbers
-c In the first case, one of a limited set of prepared starting seeds is
-c chosen from a list.  These seeds have been certified to produce random
-c sequences that do not repeat within the first 10^9 or so random numbers.
-c For cases where more choices are needed, the two-argument form gives
-c access to a total of 2^62 choices, with no guarantees about closed loops.
-c
-c NOTE: If one uses events read from an HDDM file and that file contains
-c random number seeds for the event, those seeds will be used, overwriting
-c any value(s) specified here. Most event generators do not include the
-c seeds. The seeds are written to the output HDDM file though so if one
-c uses the output file for input to another invocation of hdgeant(++)
-c then the same seeds will be used. You may check for seeds in the input
-c file using hddm-xml file.hddm | grep random .
 RNDM 3
 
-c The following line controls the cutoffs for tracking of particles.
-c CUTS cutgam cutele cutneu cuthad cutmuo bcute bcutm dcute dcutm ppcutm tofmax
-c  - cutgam = Cut for gammas (0.001 GeV)
-c  - cutele = Cut for electrons (0.001 GeV)
-c  - cutneu = Cut for neutral hadrons (0.01 GeV)
-c  - cuthad = Cut for charged hadrons (0.01 GeV)
-c  - cutmuo = Cut for muons (0.01 GeV)
-c  - bcute  = Cut for electron brems. (CUTGAM)
-c  - bcutm  = Cut for muon brems. (CUTGAM)
-c  - dcute  = Cut for electron delta-rays. (10 TeV)
-c  - dcutm  = Cut for muon delta-rays. (10 TeV)
-c  - ppcutm = Cut for e+e- pairs by muons. (0.01 GeV)
-c  - tofmax = Time of flight cut (1.E+10 sec)
-c  - gcuts  = 5 user words (0.)
-c Only the first 5 fields (the ones that start with 'cut')
-c are supported by hdgeant4.
-cCUTS 1e-4 1e-4 1e-3 1e-3 1e-4
-
-c Geant4 introduced the concept of ?a unique cut in range? which allows the user
-c to specify the threshold for secondaries production in terms of the range that
-c the secondary would have in the medium in which it is generated, rather than
-c in terms of a threshold energy. The RANGECUT card below supports the same
-c sequence as the first 5 arguments of the CUTS card above, except that the
-c values are interpreted as threshold ranges (cm) instead of kinetic energies.
-c This card is supported by hdgeant4 only. It is complementary to the CUTS card
-c in that CUTS are applied to the corresponding particles when they are being
-c tracked, whereas RANGECUTS are used to decide whether they should be
-c generated (as secondaries) in the first place.
-
-cRANGECUTS 0.1 0.1 1.0 1.0 0.1
-
-c Geant4 physics models are more comprehensive than the ones provided in G3,
-c and one consequence of this is that some particles (eg. neutrons) seem to go
-c on and on in Geant4 for lifetimes of many seconds in some cases. The following
-c card tells the simulation to stop tracks that are still being followed after 
-c this much time (seconds) has gone by. This card is only supported by hdgeant4.
-c There is an equivalent feature in hdgeant3 (see field 12 of CUTS card above)
-c but normally it is not needed to get efficient operation, so it is almost
-c never needed.
 
 TOFMAX 1e-5
 
@@ -338,18 +179,6 @@ c The following card can be used to turn off generation of secondary
 c particles in the simulation, ordinarily it should be 0 (or omitted).
 NOSECONDARIES 0
 
-c The following card tells the simulation to store particle trajectories
-c in the event output stream.  This output can be verbose, use with caution.
-c The value set here determines the amount of output recorded:
-c
-c TRAJECTORIES = 0  don't store trajectory info
-c TRAJECTORIES = 1  store birth and death points of primary tracks
-c TRAJECTORIES = 2  store birth and death points of all particles
-c TRAJECTORIES = 3  store full trajectory of primary tracks
-c TRAJECTORIES = 4  store full trajectory of primary tracks and birth/death points of secondaries
-c TRAJECTORIES = 5  store full trajectory for all particles
-c
-TRAJECTORIES 4
 
 c The following tracking parameters are defined for each tracking medium
 c   TMAXFD (REAL) maximum angular deviation due to the magnetic field
@@ -400,44 +229,9 @@ c Use this card to enable/disable ( SAVEHITS  1/0 ) writing events with no
 c hits in the detector to the hddm output file. Default value is 0.
   SAVEHITS  0
 
-c This card is used to enable/disable ( SHOWERS_IN_COL 1/0 ) simulation of 
-c showers in the primary and secondary collimators placed in the collimator cave. 
-c The default value is set to 0.
   SHOWERSINCOL 0
 
-c This card enables/disables (DRIFTCLUSTERS 1/0) simulation of electron 
-c clusters within a drift cell in the FDC or the CDC
-c The default value is 0.  
-  DRIFTCLUSTERS 0
 
-c The following cards allow one to switch on/off some physics processes in GEANT:
-c MULS 0 no multiple scattering
-c      1 Moliere or Coulomb scattering (default)  
-c 
-c BREM 0 no bremsstrahlung 
-c      1 bremsstrahlung (default)
-c
-c COMP 0 no Compton
-c      1 Compton scattering (default)
-c 
-c PAIR 0 no pair production
-c      1 pair production (default)
-c 
-c LOSS 0 (controls energy losses) no energy loss
-c      1  delta-rays are produced above the threshold. Reduced fluctuations from 
-c         delta-rays below the threshold are added to the energy losses. The threshold
-c         energies for delta-ray production can be set using the CUTS card (see above). 
-c         The fields 'dcute' and 'dcutm' in the CUTS card correspond to energy thresholds 
-c         for electron and muon delta-rays, respectively. The default energy threshold 
-c         value is 100 keV (default  see uginit.F  12/16/2011  DL). 
-c      2  no delta-rays are produced. Complete fluctuations are calculated .
-c
-c DCAY 0 no decay in flight
-c      1 decay in flight with generation of secondaries (default)
-c      2 decay in flight without generation of secondaries
-c
-c DRAY 0 no delta ray production
-c      1 delta ray production with generation of secondaries (default)
-c      2 delta ray production without generation of secondaries
+  DRIFTCLUSTERS 0
 
 END

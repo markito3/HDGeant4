@@ -49,7 +49,7 @@ class DrcHit;
 DrcEvent* glx_event(0);
 #endif
 
-const Int_t  glx_nrow(6),glx_ncol(17);
+const Int_t  glx_nrow(6),glx_ncol(18);
 const Int_t  glx_npmt(glx_nrow*glx_ncol);
 
 TChain*  glx_ch(0);
@@ -60,6 +60,7 @@ TH2F*    glx_hdigi[glx_npmt];
 TPad*    glx_hpads[glx_npmt];
 TPad*    glx_hpglobal;
 TCanvas* glx_cdigi;
+TClonesArray* glx_events;
 
 TString glx_drawDigi(TString digidata="", Int_t layoutId = 0, Double_t maxz = 0, Double_t minz = 0){
   if(!glx_cdigi) glx_cdigi = new TCanvas("glx_cdigi","glx_cdigi",800,350);
@@ -138,7 +139,7 @@ TString glx_drawDigi(TString digidata="", Int_t layoutId = 0, Double_t maxz = 0,
   glx_hdigi[nnmax]->GetZaxis()->SetLabelSize(0.06);
 
   for(Int_t m=0; m<nrow*ncol;m++){
-    Int_t nm=(5-m%6)*17 + m/6;
+    Int_t nm=(5-m%6)*glx_ncol + m/6;
     glx_hpads[m]->cd();
     glx_hdigi[nm]->Draw("col");
     if(maxz==-1)  max = glx_hdigi[nm]->GetBinContent(glx_hdigi[nm]->GetMaximumBin());
@@ -369,6 +370,23 @@ bool glx_init(TString inFile="../build/hits.root", Int_t bdigi=0, TString savepa
   return true;
 }
 
+bool glx_initc(TString inFile="../build/hits.root", Int_t bdigi=0, TString savepath=""){
+  if(inFile=="") return false;
+  if(savepath!="") glx_savepath=savepath;
+  glx_setRootPalette(1);
+  delete glx_ch;
+
+  glx_ch = new TChain("dirc");
+  glx_ch->Add(inFile);
+  glx_events = new TClonesArray("DrcEvent");
+  glx_ch->SetBranchAddress("DrcEvent", &glx_events);
+  
+  glx_entries = glx_ch->GetEntries();
+  std::cout<<"Entries in chain:  "<<glx_entries <<std::endl;
+  if(bdigi == 1) glx_initDigi();
+  return true;
+}
+
 void glx_nextEvent(Int_t ievent, Int_t printstep){
   glx_ch->GetEntry(ievent);
   if(ievent%printstep==0 && ievent!=0) cout<<"Event # "<<ievent<< " # hits "<<glx_event->GetHitSize()<<endl;
@@ -389,6 +407,26 @@ void glx_nextEvent(Int_t ievent, Int_t printstep){
     glx_phi=glx_event->GetMomentum().Phi()*180/TMath::Pi();
   }
 }
+
+void glx_nextEventc(Int_t ievent,Int_t itrack, Int_t printstep){
+  if(ievent%printstep==0 && ievent!=0 && itrack==0) cout<<"Event # "<<ievent<< " # hits "<<glx_event->GetHitSize()<<endl;
+  glx_event= (DrcEvent*) glx_events->At(itrack);
+  if(ievent == 0 && itrack==0 && gROOT->GetApplication()){
+    TIter next(gROOT->GetApplication()->InputFiles());
+    TObjString *os=0;
+    while((os = (TObjString*)next())){
+      glx_info += os->GetString()+" ";
+    }
+    glx_info += "\n";
+  }
+  glx_momentum = glx_event->GetMomentum().Mag() +0.01;    
+  glx_pdg =  glx_event->GetPdg();
+  glx_test1 = glx_event->GetTest1();
+  glx_test2 = glx_event->GetTest2();
+  glx_theta=glx_event->GetMomentum().Theta()*180/TMath::Pi();
+  glx_phi=glx_event->GetMomentum().Phi()*180/TMath::Pi();
+}
+
 #endif
 
 TString glx_randStr(Int_t len = 10){
@@ -415,12 +453,6 @@ Int_t glx_getColorId(Int_t ind, Int_t style =0){
   }
   if(style==1) cid=ind+300;
   return cid;
-}
-
-void glx_waitPrimitive(TCanvas *c){
-  c->Modified(); 
-  c->Update(); 
-  c->WaitPrimitive();
 }
 
 Int_t glx_shiftHist(TH1F *hist, Double_t double_shift){
@@ -555,6 +587,24 @@ void glx_canvasDel(TString name="c"){
   }
 }
 
+void glx_waitPrimitive(TCanvas *c){
+  c->Modified(); 
+  c->Update(); 
+  c->WaitPrimitive();
+}
+
+void glx_waitPrimitive(TString name, TString prim=""){
+  TIter next(glx_canvasList);
+  TCanvas *c=0;
+  while((c = (TCanvas*) next())){
+    if(TString(c->GetName())==name){
+      c->Modified();
+      c->Update();
+      c->WaitPrimitive(prim);
+    }
+  }
+}
+
 // style = 0 - for web blog
 // style = 1 - for talk 
 // what = 0 - save in png, pdf, root formats
@@ -565,6 +615,7 @@ void glx_canvasSave(Int_t what=0, Int_t style=0){
   TString path = glx_createDir();
   while((c = (TCanvas*) next())){
     glx_save(c, path, c->GetName(), what,style);
+    glx_canvasList->Remove(c);
   }
 }  
 

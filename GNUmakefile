@@ -26,7 +26,8 @@ CPPFLAGS += -I./src/G4debug
 CPPFLAGS += -I$(HALLD_HOME)/$(BMS_OSNAME)/include
 CPPFLAGS += -I$(JANA_HOME)/include
 CPPFLAGS += -I$(shell root-config --incdir)
-CPPFLAGS += -I/usr/include/Qt
+#CPPFLAGS += -I/usr/include/Qt
+CPPFLAGS += -I$(HOME)/usr/local/qt5.9.1/5.9.1/gcc_64/include
 CPPFLAGS += $(shell python-config --includes)
 CPPFLAGS += -Wno-unused-parameter -Wno-unused-but-set-variable
 CPPFLAGS += -DUSE_SSE2 -std=c++11
@@ -35,7 +36,7 @@ CPPFLAGS += -DUSE_SSE2 -std=c++11
 #CPPFLAGS += -DCHECK_OVERLAPS_MM=1e-4
 CPPFLAGS += -DBYPASS_DRAWING_CLIPPED_VOLUMES
 CPPFLAGS += -DLAYERED_GEOMETRY_PICKING_EXTENSIONS
-#CPPFLAGS += -DG4UI_USE_EXECUTIVE
+CPPFLAGS += -DG4UI_USE_EXECUTIVE
 CPPFLAGS += -DG4VIS_BUILD_OPENGL_DRIVER
 CPPFLAGS += -DG4VIS_BUILD_OPENGLX_DRIVER
 CPPFLAGS += -DG4MULTITHREADED
@@ -69,6 +70,7 @@ DANALIBS = -L$(HALLD_HOME)/$(BMS_OSNAME)/lib -lHDGEOMETRY -lDANA \
            -lxstream -lbz2 -lz \
            -L/usr/lib64/mysql -lmysqlclient\
            -L$(JANA_HOME)/lib -lJANA \
+           -L$(HOME)/usr/local/qt5.9.1/5.9.1/gcc_64/lib \
            -L$(CCDB_HOME)/lib -lccdb \
            -L$(EVIOROOT)/lib -levioxx -levio \
            $(ROOTLIBS) \
