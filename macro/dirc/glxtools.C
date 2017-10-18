@@ -455,12 +455,6 @@ Int_t glx_getColorId(Int_t ind, Int_t style =0){
   return cid;
 }
 
-void glx_waitPrimitive(TCanvas *c){
-  c->Modified(); 
-  c->Update(); 
-  c->WaitPrimitive();
-}
-
 Int_t glx_shiftHist(TH1F *hist, Double_t double_shift){
   Int_t bins=hist->GetXaxis()->GetNbins();
   Double_t xmin=hist->GetXaxis()->GetBinLowEdge(1);
@@ -593,6 +587,24 @@ void glx_canvasDel(TString name="c"){
   }
 }
 
+void glx_waitPrimitive(TCanvas *c){
+  c->Modified(); 
+  c->Update(); 
+  c->WaitPrimitive();
+}
+
+void glx_waitPrimitive(TString name, TString prim=""){
+  TIter next(glx_canvasList);
+  TCanvas *c=0;
+  while((c = (TCanvas*) next())){
+    if(TString(c->GetName())==name){
+      c->Modified();
+      c->Update();
+      c->WaitPrimitive(prim);
+    }
+  }
+}
+
 // style = 0 - for web blog
 // style = 1 - for talk 
 // what = 0 - save in png, pdf, root formats
@@ -603,6 +615,7 @@ void glx_canvasSave(Int_t what=0, Int_t style=0){
   TString path = glx_createDir();
   while((c = (TCanvas*) next())){
     glx_save(c, path, c->GetName(), what,style);
+    glx_canvasList->Remove(c);
   }
 }  
 
