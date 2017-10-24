@@ -13,6 +13,8 @@
 #include "G4ios.hh"
 #include "G4ParticleTable.hh"
 #include "TMath.h"
+#include "G4TransportationManager.hh"
+#include "G4PhysicalVolumeStore.hh"
 
 GlueXStackingAction::GlueXStackingAction()
 {
@@ -42,6 +44,14 @@ GlueXStackingAction::GlueXStackingAction()
    std::map<int,int> opt;
    if (user_opts->Find("NOSECONDARIES", opt)) {
       nosecondaries = (opt[1] != 0);
+   }
+
+   fBarEnd = 0;
+   G4PhysicalVolumeStore* pvStore = G4PhysicalVolumeStore::GetInstance();
+   for (size_t i=0;i<pvStore->size();i++){
+     if((*pvStore)[i]->GetName()=="QZWN") {
+       fBarEnd = fabs((*pvStore)[i]->GetTranslation().x());
+     }
    }
 }
 
@@ -77,11 +87,48 @@ G4ClassificationOfNewTrack GlueXStackingAction::ClassifyNewTrack(
    G4String ParticleName = aTrack->GetDynamicParticle()->GetParticleDefinition()->GetParticleName();
    if (aTrack->GetParentID() > 0) { // particle is secondary
       if (ParticleName == "opticalphoton") {
-         Double_t Ephoton = aTrack->GetMomentum().mag();
-         Double_t ra = G4UniformRand();
-         if (ra > GlueXSensitiveDetectorDIRC::GetDetectionEfficiency(Ephoton))
-	        return fKill;
-       }
+         double Ephoton = aTrack->GetMomentum().mag();
+
+	 // detection efficiency
+         if (G4UniformRand() > GlueXSensitiveDetectorDIRC::GetDetectionEfficiency(Ephoton)) return fKill;
+	 
+	 G4ThreeVector v = aTrack->GetPosition();
+	 G4ThreeVector n = aTrack->GetMomentumDirection().unit();
+	 
+	 double barz = 35;     // bar width
+	 double bary = 17.25;  // bar height
+	 double barx = 4*1225; // bar length
+	 
+	 double len;
+	 if(v.y()<0) {
+	   len = fabs(fBarEnd+v.x());
+	   if(n.x()>0) len += barx;
+	 }else{
+	   len =fabs(v.x()-fBarEnd);
+	   if(n.x()<0) len += barx;
+	 }
+
+	 double lenz = len*n.z()/fabs(n.x());
+	 double leny = len*n.y()/fabs(n.x());
+	 
+	 int bouncesz = fabs(lenz/barz);
+	 int bouncesy = fabs(leny/bary);
+
+	 double anglez = atan(lenz/len);
+	 double angley = atan(leny/len);
+	 	 
+	 double lambda = 197.0*2.0*CLHEP::pi/(aTrack->GetMomentum().mag()*1.0E6);
+	 double lambda2 = lambda*lambda; 
+	 
+	 // calculate bounce probability
+	 double n_quartz = sqrt(1 + (0.696*lambda2/(lambda2-pow(0.068,2))) + (0.407*lambda2/(lambda2-pow(0.116,2))) + 0.897*lambda2/(lambda2-pow(9.896,2)));
+	 double bounce_probz = 1 - pow(4*CLHEP::pi*cos(anglez)*0.5*n_quartz/lambda,2);// 0.5 [nm] - roughness
+	 double bounce_proby = 1 - pow(4*CLHEP::pi*cos(angley)*0.5*n_quartz/lambda,2);	 
+	 double prob = pow(bounce_probz,bouncesz) * pow(bounce_proby,bouncesy);
+
+	 // transtort efficiency
+	 if(G4UniformRand() > prob) return fKill;	 	
+      }
    }
    
    return fUrgent;

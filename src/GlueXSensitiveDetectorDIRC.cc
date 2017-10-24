@@ -24,7 +24,7 @@
 #define OPTICAL_PHOTON 50
 
 // Cutoff on the total number of allowed hits
-int GlueXSensitiveDetectorDIRC::MAX_HITS = 500;
+int GlueXSensitiveDetectorDIRC::MAX_HITS = 1000;
 
 // Minimum hit time difference for two hits on the same tube
 double GlueXSensitiveDetectorDIRC::TWO_HIT_TIME_RESOL = 50*ns;
@@ -273,6 +273,7 @@ double GlueXSensitiveDetectorDIRC::GetDetectionEfficiency(double energy)
    if (fDetEff == 0)
       InitializeDetEff();
    double wavelength = CLHEP::hbarc * CLHEP::twopi / energy;
+				    
    return fDetEff->Eval(wavelength / nm);
 }
 
