@@ -2,19 +2,20 @@
 #include "../../../../sim-recon/master/src/plugins/Analysis/pid_dirc/DrcEvent.h"
 #include "glxtools.C"
 
-//void drawMult(TString infile="data/out100k.root"){
-//void drawMult(TString infile="data/sim_etaprime2300.root"){
-void drawMult(TString infile="data/sim_hprime2600.root"){
+//void drawMult(TString infile="data/out_kaons_100k.root"){
+void drawMult(TString infile="data/sim_etaprime2300.root"){
+//void drawMult(TString infile="data/sim_hprime2600.root"){
   if(!glx_initc(infile,1,"data/drawHP")) return;
 
   //  gStyle->SetOptStat(0);
   TH2F *hPoint = new TH2F("hPoint",";x [cm]; y [cm]",200,-120,120,200,-120,120);
   TH1F *hMult = new TH1F("hMult",";detected photons [#]; [#]",500,0,500);
   
-  const auto xmax(100);
-  TH1F *hMultX[xmax];
-  for(auto i=0; i<xmax; i++){
-    hMultX[i] = new TH1F(Form("hMultX_%d",i),Form("hMultX_%d;x [cm]; stat [#]",i),500,0,500);
+  const auto nmax(20);
+  double minx=-100, maxx=100;
+  TH1F *hMultX[nmax];
+  for(auto i=0; i<nmax; i++){
+    hMultX[i] = new TH1F(Form("hMultX_%d",i),Form("hMultX_%d;x [cm]; stat [#]",i),300,0,300);
   }
   
   TVector3 hpos,gpos;
@@ -23,7 +24,7 @@ void drawMult(TString infile="data/sim_hprime2600.root"){
     glx_ch->GetEntry(e);
     for (auto t=0; t<glx_events->GetEntriesFast(); t++){
       glx_nextEventc(e,t,100);
-      // if(glx_event->GetParent()>0) continue;
+      if(glx_event->GetParent()>0) continue;
       hpos = glx_event->GetPosition();
       double x(hpos.X()), y(hpos.Y());      
       hPoint->Fill(x, y);
@@ -40,9 +41,9 @@ void drawMult(TString infile="data/sim_hprime2600.root"){
       }
 
       hMult->Fill(nhits);
-      if(fabs(y-12)<4){
-	int xid=50+x/2.;
-	if(xid>=0 && xid<100) hMultX[xid]->Fill(nhits);
+      if(fabs(fabs(y)-12)<4){
+	int xid = nmax*(x-minx)/(maxx - minx);
+	if(xid>=0 && xid<nmax) hMultX[xid]->Fill(nhits);
       }
     }
   }
@@ -57,14 +58,30 @@ void drawMult(TString infile="data/sim_hprime2600.root"){
   glx_canvasAdd("hPoint",500,500);
   hPoint->Draw("colz");
 
-  glx_canvasAdd("hMult",800,500);
+  glx_canvasAdd("hMult",800,400);
   hMult->Draw();
   
-  // glx_canvasAdd("hMultX");
-  // for(auto i=0; i<xmax; i++){
-  //   hMultX[i]->Draw();
-  //   glx_waitPrimitive("hMultX");
-  // }
+  glx_canvasAdd("hMultX");
+
+  TGraph *gMult = new TGraph();
+  for(auto i=0; i<nmax; i++){
+    double nph = glx_fit(hMultX[i],40,50,30).X();
+    hMultX[i]->Draw();
+
+    double xpos = minx + 0.5*(maxx - minx)/nmax + i*(maxx - minx)/nmax;
+    glx_waitPrimitive("hMultX");
+    gMult->SetPoint(i,xpos,nph);
+  }
+
+  glx_canvasAdd("gMultX",800,400);
+  gMult->GetXaxis()->SetRangeUser(-110,110);
+  gMult->GetYaxis()->SetRangeUser(0,150);
+  gMult->GetXaxis()->SetTitle("x [cm]");
+  gMult->GetYaxis()->SetTitle("detected photons [#]");
+  gMult->SetMarkerStyle(20);
+  gMult->SetMarkerSize(0.8);
+  gMult->Draw("APL");
+  
   glx_canvasSave(1,0);
   
 }

@@ -429,6 +429,78 @@ void glx_nextEventc(Int_t ievent,Int_t itrack, Int_t printstep){
 
 #endif
 
+TSpectrum *glx_spect = new TSpectrum(2);
+TF1 *glx_gaust;
+TVector3 glx_fit(TH1F *h, Double_t range = 3, Double_t threshold=20, Double_t limit=2, Int_t peakSearch=1){
+  Int_t binmax = h->GetMaximumBin();
+  Double_t xmax = h->GetXaxis()->GetBinCenter(binmax);
+  glx_gaust = new TF1("glx_gaust","[0]*exp(-0.5*((x-[1])/[2])^2)",xmax-range,xmax+range);
+  glx_gaust->SetNpx(500);
+  glx_gaust->SetParNames("const","mean","sigma");
+  glx_gaust->SetLineColor(2);
+  Double_t integral = h->Integral(h->GetXaxis()->FindBin(xmax-range),h->GetXaxis()->FindBin(xmax+range));
+  Double_t xxmin, xxmax, sigma1(0), mean1(0), sigma2(0), mean2(0);
+  xxmax = xmax;
+  xxmin = xxmax;
+  Int_t nfound(1);
+  if(integral>threshold){
+
+    if(peakSearch == 1){
+      glx_gaust->SetParameter(1,xmax);
+      glx_gaust->SetParameter(2,0.2);
+      glx_gaust->SetParLimits(2,0.005,limit);
+      h->Fit("glx_gaust","","MQN",xxmin-range, xxmax+range);
+    }
+
+    if(peakSearch == 2){
+      nfound = glx_spect->Search(h,4,"",0.1);
+      std::cout<<"nfound  "<<nfound <<std::endl;
+      if(nfound==1){
+	glx_gaust =new TF1("glx_gaust","gaus(0)",xmax-range,xmax+range);
+	glx_gaust->SetNpx(500);
+	glx_gaust->SetParameter(1,glx_spect->GetPositionX()[0]);
+      }else if(nfound==2) {
+	Double_t p1 = glx_spect->GetPositionX()[0];
+	Double_t p2 = glx_spect->GetPositionX()[1];
+	if(p1>p2) {
+	  xxmax = p1;
+	  xxmin = p2;
+	}else {
+	  xxmax = p1;
+	  xxmin = p2;
+	}
+	glx_gaust =new TF1("glx_gaust","gaus(0)+gaus(3)",xmax-range,xmax+range);
+	glx_gaust->SetNpx(500);
+	glx_gaust->SetParameter(0,1000);
+	glx_gaust->SetParameter(3,1000);
+
+	glx_gaust->FixParameter(1,xxmin);
+	glx_gaust->FixParameter(4,xxmax);
+	glx_gaust->SetParameter(2,0.1);
+	glx_gaust->SetParameter(5,0.1);
+	h->Fit("glx_gaust","","MQN",xxmin-range, xxmax+range);
+	glx_gaust->ReleaseParameter(1);
+	glx_gaust->ReleaseParameter(4);
+      }
+
+      glx_gaust->SetParameter(2,0.2);
+      glx_gaust->SetParameter(5,0.2);
+    }
+
+    h->Fit("glx_gaust","","MQN",xxmin-range, xxmax+range);
+    mean1 = glx_gaust->GetParameter(1);
+    sigma1 = glx_gaust->GetParameter(2);
+    if(sigma1>10) sigma1=10;
+
+    if(peakSearch == 2){
+      mean2 = (nfound==1) ? glx_gaust->GetParameter(1) : glx_gaust->GetParameter(4);
+      sigma2 = (nfound==1) ? glx_gaust->GetParameter(2) : glx_gaust->GetParameter(5);
+    }
+  }
+  delete glx_gaust;
+  return TVector3(mean1,sigma1,mean2);
+}
+
 TString glx_randStr(Int_t len = 10){
   gSystem->Sleep(1500);
   srand (time(NULL));
