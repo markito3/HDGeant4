@@ -95,28 +95,31 @@ G4ClassificationOfNewTrack GlueXStackingAction::ClassifyNewTrack(
 	 G4ThreeVector v = aTrack->GetPosition();
 	 G4ThreeVector n = aTrack->GetMomentumDirection().unit();
 	 
-	 double barz = 35;     // bar width
-	 double bary = 17.25;  // bar height
+	 double bary = 35;     // bar width
+	 double barz = 17.25;  // bar height
 	 double barx = 4*1225; // bar length
 	 
-	 double len;
+	 double lenx;
 	 if(v.y()<0) {
-	   len = fabs(fBarEnd+v.x());
-	   if(n.x()>0) len += barx;
+	   lenx = fabs(fBarEnd+v.x());
+	   if(n.x()>0) lenx = 2*barx - lenx;
 	 }else{
-	   len =fabs(v.x()-fBarEnd);
-	   if(n.x()<0) len += barx;
+	   lenx =fabs(v.x()-fBarEnd);
+	   if(n.x()<0) lenx = 2*barx - lenx;
 	 }
 
-	 double lenz = len*n.z()/fabs(n.x());
-	 double leny = len*n.y()/fabs(n.x());
-	 
+	 double lenz = lenx*n.z()/fabs(n.x());
+	 double leny = lenx*n.y()/fabs(n.x());
+
 	 int bouncesz = fabs(lenz/barz);
 	 int bouncesy = fabs(leny/bary);
 
-	 double anglez = atan(lenz/len);
-	 double angley = atan(leny/len);
-	 	 
+	 G4ThreeVector oz(0.,0.,1.);
+	 G4ThreeVector oy(0.,1.,0.);
+
+	 double anglez = fabs(n.angle(oz)-CLHEP::pi/2.);//atan(lenz/lenx);
+	 double angley = fabs(n.angle(oy)-CLHEP::pi/2.);//atan(leny/lenx);
+
 	 double lambda = 197.0*2.0*CLHEP::pi/(aTrack->GetMomentum().mag()*1.0E6);
 	 double lambda2 = lambda*lambda; 
 	 
@@ -128,7 +131,7 @@ G4ClassificationOfNewTrack GlueXStackingAction::ClassifyNewTrack(
 
 	 // transtort efficiency
 	 if(G4UniformRand() > prob) return fKill;	 	
-      }
+      } // if particle is secondary
    }
    
    return fUrgent;
