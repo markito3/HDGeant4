@@ -6,7 +6,7 @@
 
 // plots 1d histogram with N pho / track as a function of the theta angle
 // x range of interest is [-100, 100] cm.
-void drawNpho(TString infile="kaons100.root"){
+void drawNpho(TString infile="kaons300.root"){
 
   const Int_t nbins = 50;
 

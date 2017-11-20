@@ -1,22 +1,20 @@
-c INFILE 'bggen_500k.hddm'
-c INFILE 'genp_pi0.hddm'
-
 c INFILE 'generated_hprime2600.hddm'
 c OUTFILE 'sim_hprime2600.hddm'
 
-OUTFILE 'out.hddm'
+OUTFILE 'kaons300.hddm'
 
 
-c TRIG 100
+TRIG 10
 
-c particle  momentum  theta  phi  delta_momentum delta_theta delta_phi
-c KINE    1050  0.000000003   90.  0.      0.            0.        0.
+c        particle  momentum  theta  phi  delta_momentum delta_theta delta_phi
+cKINE    1050  0.000000003   95.  182.      0.            0.        0.
 c KINE     114      4.       5.  -90.      0.            0.        0.
-KINE     112      4.       6.    0.      0.            10.        360.
+cKINE     111      4.       6.    0.      0.            10.        360.
+KINE     111      2.       1.1    90.      0.            0.        0.
 
 c The SCAP card determines the vertex position for the particle gun.
 c vertex_x vertex_y vertex_z (default 0,0,0)
-c SCAP    0.      -44.4      595.5
+cSCAP    200.      45.      586.
 SCAP    0.      0.      65.
 
 c            vertex_extent_r  vertex_extent_z
@@ -28,16 +26,15 @@ DELETEUNSMEARED 0
 HALO  5e-5
 TRAJECTORIES 0
 
-
 BGGATE -200. 200.
 BGRATE 4.80
 BGTAGONLY 1
 
 TREFSIGMA 10.
-RNDM 3
+RNDM 33
 TOFMAX 1e-5
 
-HADR 1
+HADR 0
 CKOV 1
 LABS 1
 
@@ -46,7 +43,7 @@ DEBU 1 10 1000
 NOSECONDARIES 0
 
 BFIELDMAP 'Magnets/Solenoid/solenoid_1200A_poisson_20140520'
-c BFIELDTYPE 'NoField'
+BFIELDTYPE 'NoField'
 PSBFIELDMAP 'Magnets/PairSpectrometer/PS_1.8T_20150513_test'
 
 SAVEHITS  0
