@@ -1,8 +1,8 @@
 c INFILE 'bggen_500k.hddm'
 c INFILE 'genp_pi0.hddm'
 
-c INFILE 'generated_hprime2600.hddm'
-c OUTFILE 'sim_hprime2600.hddm'
+INFILE 'generated_hprime2600.hddm'
+cOUTFILE 'sim_hprime2600_100k_notr_nodc.hddm'
 
 OUTFILE 'out.hddm'
 
@@ -12,7 +12,7 @@ c TRIG 100
 c particle  momentum  theta  phi  delta_momentum delta_theta delta_phi
 c KINE    1050  0.000000003   90.  0.      0.            0.        0.
 c KINE     114      4.       5.  -90.      0.            0.        0.
-KINE     112      4.       6.    0.      0.            10.        360.
+c KINE     112      4.       6.    0.      0.            10.        360.
 
 c The SCAP card determines the vertex position for the particle gun.
 c vertex_x vertex_y vertex_z (default 0,0,0)
