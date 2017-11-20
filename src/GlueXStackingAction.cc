@@ -20,9 +20,8 @@
 
 
 
-TH1F *hbouncez = new TH1F("hbouncez",";bounces along z [#];entries [#]",1000,0,2000);
-TH1F *hbouncey = new TH1F("hbouncey",";bounces along y [#];entries [#]",1000,0,2000);
-
+// TH1F *hbouncez = new TH1F("hbouncez",";bounces along z [#];entries [#]",1000,0,2000);
+// TH1F *hbouncey = new TH1F("hbouncey",";bounces along y [#];entries [#]",1000,0,2000);
 
 GlueXStackingAction::GlueXStackingAction()
 {
@@ -65,14 +64,13 @@ GlueXStackingAction::GlueXStackingAction()
 
 GlueXStackingAction::~GlueXStackingAction()
 {
-  TCanvas *c = new TCanvas("c","c",800,400);
-  hbouncez->Draw();
-  c->Print("cbounces_z.png");
-  c->Print("cbounces_z.C");
-  hbouncey->Draw();
-  c->Print("cbounces_y.png");
-  c->Print("cbounces_y.C");
-
+  // TCanvas *c = new TCanvas("c","c",800,400);
+  // hbouncez->Draw();
+  // c->Print("cbounces_z.png");
+  // c->Print("cbounces_z.C");
+  // hbouncey->Draw();
+  // c->Print("cbounces_y.png");
+  // c->Print("cbounces_y.C");
 }
 
 G4ClassificationOfNewTrack GlueXStackingAction::ClassifyNewTrack(
@@ -131,8 +129,8 @@ G4ClassificationOfNewTrack GlueXStackingAction::ClassifyNewTrack(
 	 int bouncesz = fabs(lenz/barz);
 	 int bouncesy = fabs(leny/bary);
 
-	 hbouncez->Fill(bouncesz);
-	 hbouncey->Fill(bouncesy);
+	 // hbouncez->Fill(bouncesz);
+	 // hbouncey->Fill(bouncesy);
 
 	 double anglez = fabs(n.getTheta()-CLHEP::pi/2.);
 	 double angley = fabs(n.angle(G4ThreeVector(0,1,0))-CLHEP::pi/2.);
