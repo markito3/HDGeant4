@@ -15,6 +15,14 @@
 #include "TMath.h"
 #include "G4TransportationManager.hh"
 #include "G4PhysicalVolumeStore.hh"
+#include "TCanvas.h"
+#include "TH1.h"
+
+
+
+TH1F *hbouncez = new TH1F("hbouncez",";bounces along z [#];entries [#]",1000,0,2000);
+TH1F *hbouncey = new TH1F("hbouncey",";bounces along y [#];entries [#]",1000,0,2000);
+
 
 GlueXStackingAction::GlueXStackingAction()
 {
@@ -56,7 +64,16 @@ GlueXStackingAction::GlueXStackingAction()
 }
 
 GlueXStackingAction::~GlueXStackingAction()
-{}
+{
+  TCanvas *c = new TCanvas("c","c",800,400);
+  hbouncez->Draw();
+  c->Print("cbounces_z.png");
+  c->Print("cbounces_z.C");
+  hbouncey->Draw();
+  c->Print("cbounces_y.png");
+  c->Print("cbounces_y.C");
+
+}
 
 G4ClassificationOfNewTrack GlueXStackingAction::ClassifyNewTrack(
                                                 const G4Track *aTrack)
@@ -100,7 +117,7 @@ G4ClassificationOfNewTrack GlueXStackingAction::ClassifyNewTrack(
 	 double barx = 4*1225; // bar length
 	 
 	 double lenx;
-	 if(v.y()<0) {
+	 if(v.y()<0){
 	   lenx = fabs(fBarEnd+v.x());
 	   if(n.x()>0) lenx = 2*barx - lenx;
 	 }else{
@@ -114,12 +131,12 @@ G4ClassificationOfNewTrack GlueXStackingAction::ClassifyNewTrack(
 	 int bouncesz = fabs(lenz/barz);
 	 int bouncesy = fabs(leny/bary);
 
-	 G4ThreeVector oz(0.,0.,1.);
-	 G4ThreeVector oy(0.,1.,0.);
+	 hbouncez->Fill(bouncesz);
+	 hbouncey->Fill(bouncesy);
 
-	 double anglez = fabs(n.angle(oz)-CLHEP::pi/2.);//atan(lenz/lenx);
-	 double angley = fabs(n.angle(oy)-CLHEP::pi/2.);//atan(leny/lenx);
-
+	 double anglez = fabs(n.getTheta()-CLHEP::pi/2.);
+	 double angley = fabs(n.angle(G4ThreeVector(0,1,0))-CLHEP::pi/2.);
+	 
 	 double lambda = 197.0*2.0*CLHEP::pi/(aTrack->GetMomentum().mag()*1.0E6);
 	 double lambda2 = lambda*lambda; 
 	 

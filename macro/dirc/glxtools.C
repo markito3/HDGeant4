@@ -614,6 +614,40 @@ void glx_save(TPad *c= NULL,TString path="", TString name="", Int_t what=0, Int_
 	cc->SetCanvasSize(w,h);
 	if(fabs(cc->GetBottomMargin()-0.1)<0.001) cc->SetBottomMargin(0.12);
       }
+
+      if(style == 0) {
+	if(fabs(cc->GetBottomMargin()-0.1)<0.001) cc->SetBottomMargin(0.12);
+	TIter next(cc->GetListOfPrimitives());
+	TObject *obj;
+	
+	while((obj = next())){
+	  if(obj->InheritsFrom("TH1")){
+	    TH1F *hh = (TH1F*)obj;
+	    hh->GetXaxis()->SetTitleSize(0.06);
+	    hh->GetYaxis()->SetTitleSize(0.06);
+
+	    hh->GetXaxis()->SetLabelSize(0.05);
+	    hh->GetYaxis()->SetLabelSize(0.05);
+	    
+	    hh->GetXaxis()->SetTitleOffset(0.85);
+	    hh->GetYaxis()->SetTitleOffset(0.76);
+	  }
+	  if(obj->InheritsFrom("TGraph")){
+	    TGraph *gg = (TGraph*)obj;
+	    gg->GetXaxis()->SetLabelSize(0.05);
+	    gg->GetXaxis()->SetTitleSize(0.06);
+	    gg->GetXaxis()->SetTitleOffset(0.84);
+
+	    gg->GetYaxis()->SetLabelSize(0.05);
+	    gg->GetYaxis()->SetTitleSize(0.06);
+	    gg->GetYaxis()->SetTitleOffset(0.7);
+	  }
+	  if(obj->InheritsFrom("TF1")){
+	    TF1 *f = (TF1*)obj;
+	    f->SetNpx(500);
+	  }
+	}
+      }
       
       cc->Modified();
       cc->Update();

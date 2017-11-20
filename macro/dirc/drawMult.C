@@ -3,13 +3,18 @@
 #include "glxtools.C"
 
 //void drawMult(TString infile="data/out_kaons_100k.root"){
-void drawMult(TString infile="data/sim_etaprime2300.root"){
-//void drawMult(TString infile="data/sim_hprime2600.root"){
+//void drawMult(TString infile="data/sim_etaprime2300.root"){
+void drawMult(TString infile="data/sim_hprime2600_100k_tr_nodc.root"){
+//void drawMult(TString infile="data/sim_hprime2600_100k_notr_nodc.root"){
+
+  //void drawMult(TString infile="data/sim_hprime2600.root"){
+  //void drawMult(TString infile="data/sim_hprime2600.root"){
   if(!glx_initc(infile,1,"data/drawHP")) return;
 
   //  gStyle->SetOptStat(0);
   TH2F *hPoint = new TH2F("hPoint",";x [cm]; y [cm]",200,-120,120,200,-120,120);
   TH1F *hMult = new TH1F("hMult",";detected photons [#]; [#]",500,0,500);
+  TH1F *hEnergy = new TH1F("hEnergy",";photon energy [GeV]; [#]",100,0,10);
   
   const auto nmax(20);
   double minx=-100, maxx=100;
@@ -38,6 +43,7 @@ void drawMult(TString infile="data/sim_etaprime2300.root"){
     	Double_t time = hit.GetLeadTime();
     	if(pmt<108) glx_hdigi[pmt]->Fill(pix%8, 7-pix/8);
     	//if(pmt>=108) glx_hdigi[pmt-108]->Fill(pix%8, 7-pix/8);
+	hEnergy->Fill(hit.GetEnergy()*1E9);
       }
 
       hMult->Fill(nhits);
@@ -81,8 +87,11 @@ void drawMult(TString infile="data/sim_etaprime2300.root"){
   gMult->SetMarkerStyle(20);
   gMult->SetMarkerSize(0.8);
   gMult->Draw("APL");
+
+  glx_canvasAdd("hEnergy");
+  hEnergy->Draw();
   
-  glx_canvasSave(1,0);
+  glx_canvasSave(0);
   
 }
 
