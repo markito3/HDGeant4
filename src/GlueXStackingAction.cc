@@ -80,12 +80,12 @@ G4ClassificationOfNewTrack GlueXStackingAction::ClassifyNewTrack(
    //                > 0 : secondary particle
    //                < 0 : postponed from the previous event
 
-   if (nosecondaries && aTrack->GetParentID() != 0)
-      return fKill;
+  if (nosecondaries && aTrack->GetParentID() != 0)
+    return fKill;
 
    // apply detection efficiency for the DIRC at production stage:
    G4String ParticleName = aTrack->GetDynamicParticle()->GetParticleDefinition()->GetParticleName();
-   if (aTrack->GetParentID() > 0) { // particle is secondary
+   if (aTrack->GetParentID() != 0) { // particle is secondary
       if (ParticleName == "opticalphoton") {
          double Ephoton = aTrack->GetMomentum().mag();
 
@@ -131,8 +131,8 @@ G4ClassificationOfNewTrack GlueXStackingAction::ClassifyNewTrack(
 
 	 // transtort efficiency
 	 if(G4UniformRand() > prob) return fKill;	 	
-      } // if particle is secondary
-   }
+      }else{return fKill;} // remove this condition!!!
+   }// if particle is secondary
    
    return fUrgent;
 }
