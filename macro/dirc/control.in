@@ -1,21 +1,26 @@
-INFILE 'generated_hprime2600.hddm'
+cINFILE 'generated_hprime2600.hddm'
 cOUTFILE 'sim_hprime2600_100k_notr_nodc.hddm'
 
 OUTFILE 'kaons300.hddm'
 
 
-TRIG 100
+TRIG 5
 
+
+c generation of the DIRC lookup table (LUT)
+c 0 - LUT for all bars simultaneously
+c {0..47} - LUT for a given radiator
+cDIRCLUT 47
 
 c        particle  momentum  theta  phi  delta_momentum delta_theta delta_phi
-cKINE    1050  0.000000003   95.  182.      0.            0.        0.
+KINE        1050  0.000000003   90.  0.      0.            160.        160.
 c KINE     114      4.       5.  -90.      0.            0.        0.
-KINE     111      2.       1.1    90.      0.            0.        0.
+cKINE     111      3.       11.    6.      0.            0.        0.
 
 c The SCAP card determines the vertex position for the particle gun.
 c vertex_x vertex_y vertex_z (default 0,0,0)
-cSCAP    200.      45.      586.
-SCAP    0.      0.      65.
+SCAP    293.8      10.43      585.8
+cSCAP    0.      0.      65.
 
 c            vertex_extent_r  vertex_extent_z
 c TGTWIDTH           0.0              0.
