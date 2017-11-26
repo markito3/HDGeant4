@@ -17,6 +17,7 @@
 #include "G4Step.hh"
 #include "G4SDManager.hh"
 #include "G4ios.hh"
+#include "G4TransportationManager.hh"
 
 #include <JANA/JApplication.h>
 
@@ -120,9 +121,10 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
   GlueXUserTrackInformation *trackinfo = (GlueXUserTrackInformation*)
     track->GetUserInformation();
   int itrack = trackinfo->GetGlueXTrackID();
+  G4String volname = touch->GetVolume()->GetName();
 
   // radiator volume
-  if (touch->GetVolume()->GetName() == "QZBL") {
+  if (volname == "QZBL") {
     if (trackinfo->GetGlueXHistory() == 0 && itrack > 0 && xin.dot(pin) > 0) {
       int pdgtype = track->GetDynamicParticle()->GetPDGcode();
       int g3type = GlueXPrimaryGeneratorAction::ConvertPdgToGeant3(pdgtype);
@@ -144,8 +146,43 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
     return true;
   }
 
+  // wedges + oprical box
+  //  std::cout<<"volname "<<volname<<std::endl;
+  
+  // if (volname == "FWM1" || volname == "FWM2" || volname == "FTMR" ||
+  //     volname == "TSM1" || volname == "TSM2" || volname == "TSM3" ||
+  //     volname == "FSM1" || volname == "FSM2" || volname == "OWDG") {
+
+  // if (volname == "OWDG") {
+    
+  //   std::cout<<"newhitttttt "<<step->GetPostStepPoint()->GetStepStatus()  <<"  "<<step->GetPreStepPoint()->GetStepStatus()  <<"  "<<fGeomBoundary<<std::endl;      
+  //   if (step->GetPostStepPoint()->GetStepStatus() == fGeomBoundary){
+      
+  //     std::cout<<"boundd "<<std::endl;      
+  //     GlueXHitDIRCWob wobhit;
+  //     wobhit.track = track->GetTrackID();
+
+  //     // store normal to the closest boundary
+  //     G4Navigator* navigator 
+  // 	= G4TransportationManager::GetTransportationManager()
+  // 	->GetNavigatorForTracking();
+      
+  //     G4double normalId = 0;
+  //     G4bool valid;
+  //     G4ThreeVector localNormal =navigator->GetLocalExitNormal(&valid);
+  //     if(valid){
+  // 	normalId = localNormal.x() + 10*localNormal.y() + 100*localNormal.z();
+  // 	wobhit.normalId = normalId;
+  // 	std::cout<<"normalId===  "<<normalId<<std::endl;
+	
+  // 	fHitsWob.push_back(wobhit);
+  //     }
+  //   }
+  //   return true;
+  // }
+  
   // PMT's pixel volume
-  if (touch->GetVolume()->GetName() == "PIXV"){
+  if (volname == "PIXV"){
     if ((int)fHitsPmt.size() < MAX_HITS){
 
       GlueXHitDIRCPmt pmthit;
@@ -161,8 +198,18 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
 
       pmthit.ch = (box*108+pmt)*64+pix;
       pmthit.key_bar = fHitsBar.size()-1;
+
+      G4double pathId = 0;
+      G4int refl=0;
+      for (unsigned int i=0;i<fHitsWob.size();i++){
+	if(fHitsWob[i].track == track->GetTrackID()) {
+	  pathId +=fHitsWob[i].normalId*1000*(++refl);
+	}
+      }      
+      //      std::cout<<"pathId "<<pathId<<std::endl;
+      
       fHitsPmt.push_back(pmthit);
-    }else {
+    }else{
       G4cerr << "GlueXSensitiveDetectorDIRC::ProcessHits error: "
              << "max hit count " << MAX_HITS << " exceeded, truncating!"
              << G4endl;

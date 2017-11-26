@@ -20,6 +20,7 @@
 #include "GlueXHitDIRCpoint.hh"
 #include "GlueXHitDIRCPmt.hh"
 #include "GlueXHitDIRCBar.hh"
+#include "GlueXHitDIRCWob.hh"
 
 #include <TGraph.h>
 
@@ -44,6 +45,7 @@ class GlueXSensitiveDetectorDIRC : public G4VSensitiveDetector
   
  private:
   std::vector<GlueXHitDIRCBar> fHitsBar;
+  std::vector<GlueXHitDIRCWob> fHitsWob;
   std::vector<GlueXHitDIRCPmt> fHitsPmt;
   
   static std::map<G4LogicalVolume*, int> fVolumeTable;
