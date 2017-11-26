@@ -147,37 +147,39 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
   }
 
   // wedges + oprical box
-  std::cout<<"volname "<<volname<<std::endl;
+  //  std::cout<<"volname "<<volname<<std::endl;
   
-  if (volname == "FWM1" || volname == "FWM2" || volname == "FTMR" ||
-      volname == "TSM1" || volname == "TSM2" || volname == "TSM3" ||
-      volname == "FSM1" || volname == "FSM2" || volname == "OWDG") {
+  // if (volname == "FWM1" || volname == "FWM2" || volname == "FTMR" ||
+  //     volname == "TSM1" || volname == "TSM2" || volname == "TSM3" ||
+  //     volname == "FSM1" || volname == "FSM2" || volname == "OWDG") {
+
+  // if (volname == "OWDG") {
     
-    std::cout<<"newhitttttt "<<std::endl;      
-    if (step->GetPostStepPoint()->GetStepStatus() == fGeomBoundary){
+  //   std::cout<<"newhitttttt "<<step->GetPostStepPoint()->GetStepStatus()  <<"  "<<step->GetPreStepPoint()->GetStepStatus()  <<"  "<<fGeomBoundary<<std::endl;      
+  //   if (step->GetPostStepPoint()->GetStepStatus() == fGeomBoundary){
+      
+  //     std::cout<<"boundd "<<std::endl;      
+  //     GlueXHitDIRCWob wobhit;
+  //     wobhit.track = track->GetTrackID();
 
-      std::cout<<"boundd "<<std::endl;      
-      GlueXHitDIRCWob wobhit;
-      wobhit.track = track->GetTrackID();
-
-      // store normal to the closest boundary
-       G4Navigator* navigator 
-	= G4TransportationManager::GetTransportationManager()
-	->GetNavigatorForTracking();
-
-      G4double normalId = 0;
-      G4bool valid;
-      G4ThreeVector localNormal =navigator->GetLocalExitNormal(&valid);
-      if(valid){
-	normalId = localNormal.x() + 10*localNormal.y() + 100*localNormal.z();
-	wobhit.normalId = normalId;
-	std::cout<<"normalId===  "<<normalId<<std::endl;
+  //     // store normal to the closest boundary
+  //     G4Navigator* navigator 
+  // 	= G4TransportationManager::GetTransportationManager()
+  // 	->GetNavigatorForTracking();
+      
+  //     G4double normalId = 0;
+  //     G4bool valid;
+  //     G4ThreeVector localNormal =navigator->GetLocalExitNormal(&valid);
+  //     if(valid){
+  // 	normalId = localNormal.x() + 10*localNormal.y() + 100*localNormal.z();
+  // 	wobhit.normalId = normalId;
+  // 	std::cout<<"normalId===  "<<normalId<<std::endl;
 	
-	fHitsWob.push_back(wobhit);
-      }
-    }
-    return true;
-  }
+  // 	fHitsWob.push_back(wobhit);
+  //     }
+  //   }
+  //   return true;
+  // }
   
   // PMT's pixel volume
   if (volname == "PIXV"){
@@ -199,12 +201,12 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
 
       G4double pathId = 0;
       G4int refl=0;
-      for (int i=0;i<fHitsWob.size();i++){
+      for (unsigned int i=0;i<fHitsWob.size();i++){
 	if(fHitsWob[i].track == track->GetTrackID()) {
 	  pathId +=fHitsWob[i].normalId*1000*(++refl);
 	}
       }      
-      std::cout<<"pathId "<<pathId<<std::endl;
+      //      std::cout<<"pathId "<<pathId<<std::endl;
       
       fHitsPmt.push_back(pmthit);
     }else{
