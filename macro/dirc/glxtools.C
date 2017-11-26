@@ -409,8 +409,8 @@ void glx_nextEvent(Int_t ievent, Int_t printstep){
 }
 
 void glx_nextEventc(Int_t ievent,Int_t itrack, Int_t printstep){
-  if(ievent%printstep==0 && ievent!=0 && itrack==0) cout<<"Event # "<<ievent<< " # hits "<<glx_event->GetHitSize()<<endl;
   glx_event= (DrcEvent*) glx_events->At(itrack);
+  if(ievent%printstep==0 && ievent!=0 && itrack==0) cout<<"Event # "<<ievent<< " # hits "<<glx_event->GetHitSize()<<endl;
   if(ievent == 0 && itrack==0 && gROOT->GetApplication()){
     TIter next(gROOT->GetApplication()->InputFiles());
     TObjString *os=0;

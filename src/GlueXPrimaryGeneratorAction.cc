@@ -75,7 +75,8 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
    std::map<int,std::string> infile;
    std::map<int,double> beampars;
    std::map<int,double> kinepars;
-
+   std::map<int, int> dirclutpars;
+   
    // Three event source options are supported:
    // 1) external generator, hddm input stream source
    // 2) internal coherent bremsstrahlung beam generator
@@ -100,6 +101,38 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
    else if (user_opts->Find("BEAM", beampars))
    {
       fSourceType = SOURCE_TYPE_COBREMS_GEN;
+   }
+
+   else if (user_opts->Find("DIRCLUT", dirclutpars))
+   {
+     fGunParticle.geantType = 0;
+     fGunParticle.pdgType = 999999;
+     fGunParticle.partDef = fParticleTable->FindParticle("opticalphoton");
+     fGunParticle.deltaR = 0;
+     fGunParticle.deltaZ = 0;
+     fGunParticle.mom = 0.0000000035 * GeV;
+     G4ThreeVector vec(0,0,1);
+     vec.setTheta(cos(G4UniformRand()));
+     vec.setPhi(2*M_PI*G4UniformRand());
+     vec.rotateY(M_PI/2.);
+     double x(2930.8), y(0), z(5850.8);
+     if(dirclutpars[1] != 0){
+       G4double arr[] = {-810.25, -290.75, 290.75, 810.25};
+       y = arr[dirclutpars[1]/12]-190.33+(11-dirclutpars[1]%12)*30.515;
+       if(dirclutpars[1] > 2){
+	 x = -2930.8;
+	 vec.rotateY(M_PI);
+       }
+     }
+     
+     fGunParticle.pos.set(x,y,z); 
+     fGunParticle.theta = vec.theta() * degree;
+     fGunParticle.phi = vec.phi() * degree;
+     fGunParticle.deltaMom = 0;
+     fGunParticle.deltaTheta = 0;
+     fGunParticle.deltaPhi = 0;
+     
+     fSourceType = SOURCE_TYPE_PARTICLE_GUN;
    }
 
    else if (user_opts->Find("KINE", kinepars))
