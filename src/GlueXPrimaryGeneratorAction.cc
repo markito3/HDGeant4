@@ -8,6 +8,7 @@
 #include "GlueXPrimaryGenerator.hh"
 #include "GlueXUserEventInformation.hh"
 #include "GlueXUserOptions.hh"
+#include "G4OpticalPhoton.hh"
 
 #include "G4Event.hh"
 #include "G4ParticleTable.hh"
@@ -111,27 +112,22 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
      fGunParticle.deltaR = 0;
      fGunParticle.deltaZ = 0;
      fGunParticle.mom = 0.0000000035 * GeV;
-     G4ThreeVector vec(0,0,1);
-     vec.setTheta(cos(G4UniformRand()));
-     vec.setPhi(2*M_PI*G4UniformRand());
-     vec.rotateY(M_PI/2.);
-     double x(2930.8), y(0), z(5850.8);
+
+     double x(-2938.), y(0), z(5858.);
      if(dirclutpars[1] != 0){
-       G4double arr[] = {-810.25, -290.75, 290.75, 810.25};
-       y = arr[dirclutpars[1]/12]-190.33+(11-dirclutpars[1]%12)*30.515;
-       if(dirclutpars[1] > 2){
-	 x = -2930.8;
-	 vec.rotateY(M_PI);
+       G4double arr[] = {-812.5, -297.5, 297.5, 812.5};
+       y = arr[dirclutpars[1]/12]-193.3+(dirclutpars[1]%12)*35.15;
+       if(dirclutpars[1] > 24){
+	 x = 2938.;
+	 y = arr[dirclutpars[1]/12]-193.3+(dirclutpars[1])%12*35.15;
        }
      }
-     
      fGunParticle.pos.set(x,y,z); 
-     fGunParticle.theta = vec.theta() * degree;
-     fGunParticle.phi = vec.phi() * degree;
      fGunParticle.deltaMom = 0;
      fGunParticle.deltaTheta = 0;
      fGunParticle.deltaPhi = 0;
-     
+     fParticleGun->SetParticleDefinition(fGunParticle.partDef);
+ 
      fSourceType = SOURCE_TYPE_PARTICLE_GUN;
    }
 
@@ -166,8 +162,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
                 << " was specified in the control.in file." << G4endl;
          exit(-1);
       }
-      fParticleGun->SetParticleDefinition(fGunParticle.partDef);
-
+       
       double x(0), y(0), z(65 * cm);
       std::map<int,double> scappars;
       if (user_opts->Find("SCAP", scappars)) {
@@ -198,7 +193,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 
       fGunParticle.mom = kinepars[2] * GeV;
       if (kinepars[1] > 100) {
-         fGunParticle.theta = kinepars[3] * degree;
+	 fGunParticle.theta = kinepars[3] * degree;
          fGunParticle.phi = kinepars[4] * degree;
          fGunParticle.deltaMom = kinepars[5] * GeV;
          fGunParticle.deltaTheta = kinepars[6] * degree;
@@ -362,6 +357,9 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
    // our own derived class. (Sheesh!!)
    fParticleGun->Reset();
 
+   GlueXUserOptions *user_opts = GlueXUserOptions::GetInstance();
+   std::map<int,int> dirclutpars; 
+
    // place and smear the particle gun origin
    G4ThreeVector pos(fGunParticle.pos);
    if (fGunParticle.deltaR > 0) {
@@ -411,9 +409,23 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
    }
    if (fGunParticle.deltaPhi > 0)
       phip += (G4UniformRand() - 0.5) * fGunParticle.deltaPhi;
+   if (user_opts->Find("DIRCLUT", dirclutpars)){
+     G4ThreeVector vec(0,0,1);
+     double rand1 = G4UniformRand();
+     double rand2 = G4UniformRand();
+     vec.setTheta(acos(rand1));
+     vec.setPhi(2*M_PI*rand2);
+     vec.rotateY(M_PI/2.);
+     if(dirclutpars[1] < 24){
+       vec.rotateY(M_PI);
+     }
+     thetap = vec.theta();
+     phip = vec.phi();     
+   }
    G4ThreeVector mom(p * sin(thetap) * cos(phip),
                      p * sin(thetap) * sin(phip),
                      p * cos(thetap));
+   std::cout<<"theta = "<<thetap/3.1415*180.<<", phi = "<<phip/3.1415*180<<", p = "<<p<<std::endl;
    fParticleGun->SetParticleMomentum(mom);
    fParticleGun->SetParticleTime(0);
 
