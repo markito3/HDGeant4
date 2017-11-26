@@ -89,6 +89,8 @@ INTYLIBS += -L$(G4TMPDIR) -lhdds
 INTYLIBS += -lboost_python -L$(shell python-config --prefix)/lib $(shell python-config --ldflags)
 INTYLIBS += -L$(G4ROOT)/lib64 $(patsubst $(G4ROOT)/lib64/lib%.so, -l%, $(G4shared_libs))
 
+EXTRALIBS += -lG4fixes
+
 .PHONY: all
 all: hdds cobrems g4fixes sharedlib exe lib bin g4py
 
