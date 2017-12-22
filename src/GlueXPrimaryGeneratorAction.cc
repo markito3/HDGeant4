@@ -162,7 +162,8 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
                 << " was specified in the control.in file." << G4endl;
          exit(-1);
       }
-       
+      fParticleGun->SetParticleDefinition(fGunParticle.partDef);
+
       double x(0), y(0), z(65 * cm);
       std::map<int,double> scappars;
       if (user_opts->Find("SCAP", scappars)) {
@@ -356,6 +357,8 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
    // the other is 0. Here, we reset the particle gun energy using 
    // our own derived class. (Sheesh!!)
    fParticleGun->Reset();
+
+   std::cout<<"GENERATE PRIMARIES PARTICLE GUN"<<std::endl;
 
    GlueXUserOptions *user_opts = GlueXUserOptions::GetInstance();
    std::map<int,int> dirclutpars; 
