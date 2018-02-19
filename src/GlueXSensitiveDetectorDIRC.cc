@@ -9,6 +9,7 @@
 #include "GlueXPrimaryGeneratorAction.hh"
 #include "GlueXUserEventInformation.hh"
 #include "GlueXUserTrackInformation.hh"
+#include "GlueXUserOptions.hh"
 
 #include "G4VPhysicalVolume.hh"
 #include "G4PVPlacement.hh"
@@ -18,6 +19,7 @@
 #include "G4SDManager.hh"
 #include "G4ios.hh"
 #include "G4TransportationManager.hh"
+#include "G4ParallelWorldProcess.hh"
 
 #include <JANA/JApplication.h>
 
@@ -62,6 +64,12 @@ GlueXSensitiveDetectorDIRC::GlueXSensitiveDetectorDIRC(const G4String& name)
       G4cout << "DIRC: ALL parameters loaded from ccdb" << G4endl;
     }
   }
+
+  GlueXUserOptions *user_opts = GlueXUserOptions::GetInstance();
+  std::map<int, int> dirclutpars;
+  if (user_opts->Find("DIRCLUT", dirclutpars)){
+    fLutId = dirclutpars[1];
+  }else fLutId = 0;
 }
 
     GlueXSensitiveDetectorDIRC::GlueXSensitiveDetectorDIRC(const GlueXSensitiveDetectorDIRC &src)
@@ -89,6 +97,10 @@ void GlueXSensitiveDetectorDIRC::Initialize(G4HCofThisEvent* hce)
 G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step, 
                                                G4TouchableHistory* unused)
 {
+
+
+  
+  G4TouchableHistory* touchable = (G4TouchableHistory*)(step->GetPostStepPoint()->GetTouchable());
   
   const G4ThreeVector &pin = step->GetPreStepPoint()->GetMomentum();
   const G4ThreeVector &xin = step->GetPreStepPoint()->GetPosition();
@@ -117,12 +129,11 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
   // order of appearance in the event simulation.
 
   G4Track *track = step->GetTrack();
-  // G4int trackID = track->GetTrackID();
   GlueXUserTrackInformation *trackinfo = (GlueXUserTrackInformation*)
     track->GetUserInformation();
   int itrack = trackinfo->GetGlueXTrackID();
-  G4String volname = touch->GetVolume()->GetName();
-
+  G4String volname = touch->GetVolume()->GetName();  
+  
   // radiator volume
   if (volname == "QZBL") {
     if (trackinfo->GetGlueXHistory() == 0 && itrack > 0 && xin.dot(pin) > 0) {
@@ -146,40 +157,52 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
     return true;
   }
 
-  // wedges + oprical box
-  //  std::cout<<"volname "<<volname<<std::endl;
-  
-  // if (volname == "FWM1" || volname == "FWM2" || volname == "FTMR" ||
-  //     volname == "TSM1" || volname == "TSM2" || volname == "TSM3" ||
-  //     volname == "FSM1" || volname == "FSM2" || volname == "OWDG") {
+  // wedge and mirrors volumes
+  if (volname == "FWM1" || volname == "FWM2" || volname == "FTMR" ||
+      volname == "TSM1" || volname == "TSM2" || volname == "TSM3" ||
+      volname == "FSM1" || volname == "FSM2" || volname == "OWDG") {
 
-  // if (volname == "OWDG") {
-    
-  //   std::cout<<"newhitttttt "<<step->GetPostStepPoint()->GetStepStatus()  <<"  "<<step->GetPreStepPoint()->GetStepStatus()  <<"  "<<fGeomBoundary<<std::endl;      
-  //   if (step->GetPostStepPoint()->GetStepStatus() == fGeomBoundary){
-      
-  //     std::cout<<"boundd "<<std::endl;      
-  //     GlueXHitDIRCWob wobhit;
-  //     wobhit.track = track->GetTrackID();
 
-  //     // store normal to the closest boundary
-  //     G4Navigator* navigator 
-  // 	= G4TransportationManager::GetTransportationManager()
-  // 	->GetNavigatorForTracking();
+    GlueXHitDIRCWob wobhit;
+    wobhit.track = track->GetTrackID();
+
+    // store normal to the closest boundary
+    G4int hNavId = G4ParallelWorldProcess::GetHypNavigatorID();
+    std::vector<G4Navigator*>::iterator iNav =
+      G4TransportationManager::GetTransportationManager()->
+      GetActiveNavigatorsIterator();
+
+    G4bool valid;
+    G4ThreeVector localNormal = (iNav[hNavId])->GetLocalExitNormal(&valid);
+    if(valid){
+      int mid=0;
+      if(volname == "OWDG"){
+	if(fabs(localNormal.y()+1)<0.001) mid=1;
+	else if(fabs(localNormal.y()-1)<0.001) mid=2;
+	else if(fabs(localNormal.z()-1)<0.01)  mid=3;
+	else if(fabs(localNormal.z()+0.86)<0.01) mid=4;
+	else mid=0;
+      }
+      if(volname == "FSM1") mid = 5;
+      if(volname == "FSM2") mid = 6;
+      if(volname == "FWM1") mid = 7;
+      if(volname == "FWM2") mid = 8;
+      if(volname == "FTMR") mid = 9;
+      if(volname == "TSM1") mid=10;
+      if(volname == "TSM2") mid=11;
+      if(volname == "TSM3") mid=12;
       
-  //     G4double normalId = 0;
-  //     G4bool valid;
-  //     G4ThreeVector localNormal =navigator->GetLocalExitNormal(&valid);
-  //     if(valid){
-  // 	normalId = localNormal.x() + 10*localNormal.y() + 100*localNormal.z();
-  // 	wobhit.normalId = normalId;
-  // 	std::cout<<"normalId===  "<<normalId<<std::endl;
-	
-  // 	fHitsWob.push_back(wobhit);
-  //     }
-  //   }
-  //   return true;
-  // }
+      std::cout<<"mid "<<mid<< "  "<< localNormal.x() <<" "<< localNormal.y() <<" "<<localNormal.z() <<std::endl;
+      
+      if(mid!=0){
+	G4double normalId = mid;// localNormal.x() + 10*localNormal.y() + 100*localNormal.z();
+	wobhit.normalId = normalId;
+	fHitsWob.push_back(wobhit);
+      }
+    }
+
+    return true;
+  }
   
   // PMT's pixel volume
   if (volname == "PIXV"){
@@ -199,15 +222,25 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
       pmthit.ch = (box*108+pmt)*64+pix;
       pmthit.key_bar = fHitsBar.size()-1;
 
+      if(fHitsWob.size()>12) fHitsWob.clear();
+      
       G4double pathId = 0;
       G4int refl=0;
       for (unsigned int i=0;i<fHitsWob.size();i++){
-	if(fHitsWob[i].track == track->GetTrackID()) {
-	  pathId +=fHitsWob[i].normalId*1000*(++refl);
+	if(fHitsWob[i].track == track->GetTrackID()) {	  
+	  pathId +=fHitsWob[i].normalId*100*(++refl);
+	  std::cout<<refl<<" normalId  "<<fHitsWob[i].normalId << " pathId  "<< pathId<<std::endl;	  
 	}
-      }      
-      //      std::cout<<"pathId "<<pathId<<std::endl;
+      }
+      std::cout<<" ---------------------------------------------  "<<(int)fHitsPmt.size()<<std::endl;     
       
+      pmthit.E_GeV = pathId; // save path id into E_GeV
+      if(fLutId){
+	//G4ThreeVector vmom = track->GetVertexMomentumDirection();
+	pmthit.key_bar = fLutId;
+	if(fHitsBar.size()>0)fHitsBar[0].pdg=refl;
+      }
+
       fHitsPmt.push_back(pmthit);
     }else{
       G4cerr << "GlueXSensitiveDetectorDIRC::ProcessHits error: "
@@ -220,8 +253,12 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
 
 void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
 {
-  if (fHitsBar.size() == 0 || fHitsPmt.size() == 0)
+  if (fHitsBar.size() == 0 || fHitsPmt.size() == 0 || fHitsWob.size() == 0){
+    fHitsBar.clear();
+    fHitsPmt.clear();
+    fHitsWob.clear();
     return;
+  }
   
   if (verboseLevel > 1) { 
     G4cout << G4endl
@@ -287,6 +324,7 @@ void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
 
   fHitsBar.clear();
   fHitsPmt.clear();
+  fHitsWob.clear();
 }
 
 int GlueXSensitiveDetectorDIRC::GetIdent(std::string div, 

@@ -8,12 +8,14 @@ c TRIG 5
 c generation of the DIRC lookup table (LUT)
 c 0 - LUT for all bars simultaneously
 c {0..47} - LUT for a given radiator
-c DIRCLUT 47
+DIRCLUT 1
 
 c particle  momentum  theta  phi  delta_momentum delta_theta delta_phi
 c KINE    1050  0.000000003   90.  0.      0.            0.        0.
-c KINE     114      4.       5.  -90.      0.            0.        0.
-KINE     112      4.       6.    0.      0.            10.        360.
+c KINE     108      4.       11.  -90.      0.            0.        0.
+
+c KINE     114      4.       11.  -90.      0.            0.        0.
+c KINE     112      4.       6.    0.      0.            10.        360.
 
 
 c The SCAP card determines the vertex position for the particle gun.

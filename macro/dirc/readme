@@ -17,4 +17,11 @@ root loadlib.C drawHP.C'("drc.root")'
 For a GUI with 3D visualization one need to have OpenGl and Qt libraries installed.
 Also -DG4UI_USE_EXECUTIVE flag needs to be added in GNUmakefile
 
+# === LUT creation ===
+put  "DIRCLUT 1" derective into control.in
+#run
+hdgeant4 -t1 run.mac
+# with about 100k in run.mac
 
+#create LUT with lut_dirc plugin:
+hd_root -nthreads=10-o lut.root --plugin=lut_dirc out.hddm 
