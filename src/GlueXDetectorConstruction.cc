@@ -374,27 +374,27 @@ void GlueXDetectorConstruction::ConstructSDandField()
          iter->second->SetSensitiveDetector(ftofHandler);
       }
       else if (volname == "QZBL" || volname == "PIXV") {
-         if (dircHandler == 0) {
-            dircHandler = new GlueXSensitiveDetectorDIRC("dirc");
-            SDman->AddNewDetector(dircHandler);
-         }
-         iter->second->SetSensitiveDetector(dircHandler);
+	if (dircHandler == 0) {
+	  dircHandler = new GlueXSensitiveDetectorDIRC("dirc");
+	  SDman->AddNewDetector(dircHandler);
+	}
+	iter->second->SetSensitiveDetector(dircHandler);
       }
       else if (volname == "FWM1" || volname == "FWM2" || volname == "FTMR" ||
 	       volname == "TSM1" || volname == "TSM2" || volname == "TSM3" ||
 	       volname == "FSM1" || volname == "FSM2" || volname == "OWDG") {
-         if (dircHandler == 0) {
-            dircHandler = new GlueXSensitiveDetectorDIRC("dirc");
-            SDman->AddNewDetector(dircHandler);
-         }
-         iter->second->SetSensitiveDetector(dircHandler);
+	if (dircHandler == 0) {
+	  dircHandler = new GlueXSensitiveDetectorDIRC("dirc");
+	  SDman->AddNewDetector(dircHandler);
+	}
+	iter->second->SetSensitiveDetector(dircHandler);
       }
       else if (volname == "CERW" || volname == "CPPC") {
-         if (cereHandler == 0) {
-            cereHandler = new GlueXSensitiveDetectorCERE("cere");
-            SDman->AddNewDetector(cereHandler);
-         }
-         iter->second->SetSensitiveDetector(cereHandler);
+	if (cereHandler == 0) {
+	  cereHandler = new GlueXSensitiveDetectorCERE("cere");
+	  SDman->AddNewDetector(cereHandler);
+	}
+	iter->second->SetSensitiveDetector(cereHandler);
       }
       else if (volname == "CPPG") {
          if (fmwpcHandler == 0) {

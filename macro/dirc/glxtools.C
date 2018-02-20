@@ -61,6 +61,8 @@ TPad*    glx_hpads[glx_npmt];
 TPad*    glx_hpglobal;
 TCanvas* glx_cdigi;
 TClonesArray* glx_events;
+int glx_apdg[]={11,13,211,321,2212};
+double glx_mass[] = {0.000511,0.1056584,0.139570,0.49368,0.9382723};
 
 TString glx_drawDigi(TString digidata="", Int_t layoutId = 0, Double_t maxz = 0, Double_t minz = 0){
   if(!glx_cdigi) glx_cdigi = new TCanvas("glx_cdigi","glx_cdigi",800,350);
@@ -738,4 +740,13 @@ void glx_normalize(TH1F* hists[],Int_t size){
   for(Int_t i=0; i<size; i++){
     hists[i]->GetYaxis()->SetRangeUser(min,max);
   }
+}
+
+int glx_findPdgId(int pdg){
+  int pdgId=0; // electron by default 
+  if(pdg == 13) pdgId=1;
+  if(pdg == 211) pdgId=2;
+  if(pdg == 321) pdgId=3;
+  if(pdg == 2212) pdgId=4;
+  return pdgId;
 }

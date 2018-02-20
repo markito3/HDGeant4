@@ -111,18 +111,9 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
      fGunParticle.partDef = fParticleTable->FindParticle("opticalphoton");
      fGunParticle.deltaR = 0;
      fGunParticle.deltaZ = 0;
-     fGunParticle.mom = 0.0000000035 * GeV;
+     fGunParticle.mom = 3.18 * eV;
 
-     double x(-2938.), y(0), z(5858.);
-     if(dirclutpars[1] != 0){
-       G4double arr[] = {-812.5, -297.5, 297.5, 812.5};
-       y = arr[dirclutpars[1]/12]-193.3+(dirclutpars[1]%12)*35.15;
-       if(dirclutpars[1] > 24){
-	 x = 2938.;
-	 y = arr[dirclutpars[1]/12]-193.3+(dirclutpars[1])%12*35.15;
-       }
-     }
-     fGunParticle.pos.set(x,y,z); 
+
      fGunParticle.deltaMom = 0;
      fGunParticle.deltaTheta = 0;
      fGunParticle.deltaPhi = 0;
@@ -401,8 +392,8 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
    }
    if (fGunParticle.deltaTheta > 0) {
       if (fGunParticle.plogOption) {
-         double thetamin = thetap - fGunParticle.deltaMom / 2;
-         double thetamax = thetap + fGunParticle.deltaMom / 2;
+         double thetamin = thetap - fGunParticle.deltaTheta / 2;
+         double thetamax = thetap + fGunParticle.deltaTheta / 2;
          thetamin = (thetamin > 0)? thetamin : 1e-6*degree;
          thetap = thetamin * pow(thetamax/thetamin, G4UniformRand());
       }
@@ -412,6 +403,7 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
    }
    if (fGunParticle.deltaPhi > 0)
       phip += (G4UniformRand() - 0.5) * fGunParticle.deltaPhi;
+
    if (user_opts->Find("DIRCLUT", dirclutpars)){
      G4ThreeVector vec(0,0,1);
      double rand1 = G4UniformRand();
@@ -423,12 +415,27 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
        vec.rotateY(M_PI);
      }
      thetap = vec.theta();
-     phip = vec.phi();     
+     phip = vec.phi();
+     
+     double x(-2938.), y(0), z(5858.);
+     if(dirclutpars[1] != 0){
+       G4double arr[] = {-812.5, -297.5, 297.5, 812.5};
+       y = arr[dirclutpars[1]/12]-193.3+(dirclutpars[1]%12)*35.15;
+       if(dirclutpars[1] > 24){
+	 x = 2938.;
+	 y = arr[dirclutpars[1]/12]-193.3+(dirclutpars[1])%12*35.15;
+       }
+     }
+     
+     y += 15-30*G4UniformRand();
+     z += 5-10*G4UniformRand();
+     fParticleGun->SetParticlePosition(G4ThreeVector(x,y,z));
    }
+
    G4ThreeVector mom(p * sin(thetap) * cos(phip),
                      p * sin(thetap) * sin(phip),
                      p * cos(thetap));
-   std::cout<<"theta = "<<thetap/3.1415*180.<<", phi = "<<phip/3.1415*180<<", p = "<<p<<std::endl;
+
    fParticleGun->SetParticleMomentum(mom);
    fParticleGun->SetParticleTime(0);
 

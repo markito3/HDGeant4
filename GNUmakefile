@@ -48,7 +48,7 @@ CPPFLAGS += -DG4MULTITHREADED
 #CPPFLAGS += -DDEBUG_SECTIONPLANE_ZAVE
 
 # If you want to build against Geant4.10.03 or greater, you will need this line uncommented
-#CPPFLAGS += -DG4VUSERPHYSICSLIST_HAS_GETPARTICLEITERATOR
+CPPFLAGS += -DG4VUSERPHYSICSLIST_HAS_GETPARTICLEITERATOR
 
 G4LIB_USE_GDML = 1
 CPPVERBOSE = 1
@@ -67,6 +67,7 @@ DANALIBS = -L$(HALLD_HOME)/$(BMS_OSNAME)/lib -lHDGEOMETRY -lDANA \
            -lFDC -lFMWPC -lHDDM -lPAIR_SPECTROMETER -lPID -lRF \
            -lSTART_COUNTER -lTAGGER -lTOF -lTPOL -lTRACKING \
            -lTRIGGER -lDAQ -lTTAB -lEVENTSTORE -lKINFITTER -lTAC \
+           -L$(SQLITECPP_HOME)/lib -lSQLiteCpp -lsqlite3 \
            -lxstream -lbz2 -lz \
            -L/usr/lib64/mysql -lmysqlclient\
            -L$(JANA_HOME)/lib -lJANA \
