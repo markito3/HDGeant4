@@ -8,9 +8,9 @@ void drawHitPats1(double xmin=-40., double xmax=45., double ymin=-40., double ym
       
       DrcHit hit;
       TVector3 hpos;
-      int Neve = 100;
-      if(Neve == 0) NeventsTotal = glx_ch->GetEntries();
-      for (Int_t e=0; e<NeventsTotal; e++){
+      int Neve = 0;
+      if(Neve == 0) Neve = glx_ch->GetEntries();
+      for (Int_t e=0; e<Neve; e++){
 	glx_ch->GetEntry(e);
 	for (Int_t t=0; t<glx_events->GetEntriesFast(); t++){
 	  glx_nextEventc(e,t,10);

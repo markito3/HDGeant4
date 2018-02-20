@@ -358,7 +358,7 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
    // our own derived class. (Sheesh!!)
    fParticleGun->Reset();
 
-   std::cout<<"GENERATE PRIMARIES PARTICLE GUN"<<std::endl;
+   std::cout<<"GlueXPrimaryGeneratorAction:: GENERATE PRIMARIES PARTICLE GUN"<<std::endl;
 
    GlueXUserOptions *user_opts = GlueXUserOptions::GetInstance();
    std::map<int,int> dirclutpars; 
