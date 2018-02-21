@@ -1,6 +1,11 @@
 {
-  //  gSystem->Load("../../../../sim-recon/master/Linux_Linux-x86_64-gcc4.9.2/plugins/pid_dirc.so");
-  gSystem->Load("../../../../sim-recon/master/Linux_Ubuntu16.04-x86_64-gcc5.4.0/plugins/pid_dirc.so");
-  //gSystem->Load("../../../../sim-recon/master/Linux_CentOS7-x86_64-gcc4.8.5/plugins/pid_dirc.so");
-  gSystem->Load("../../../../sim-recon/master/Linux_Ubuntu16.04-x86_64-gcc5.4.0/plugins/lut_dirc.so");
+  TString path="", tok="";
+  TString sys = gSystem->Getenv("JANA_PLUGIN_PATH");
+  Ssiz_t from = 0;
+  while (sys.Tokenize(tok, from,":")) {
+    if(tok.Contains("sim-recon")) path = tok;    
+  }
+  
+  gSystem->Load(path+"/pid_dirc.so");
+  gSystem->Load(path+"/lut_dirc.so");
 }
