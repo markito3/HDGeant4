@@ -349,7 +349,7 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
    // our own derived class. (Sheesh!!)
    fParticleGun->Reset();
 
-   std::cout<<"GlueXPrimaryGeneratorAction:: GENERATE PRIMARIES PARTICLE GUN"<<std::endl;
+   //   std::cout<<"GlueXPrimaryGeneratorAction:: GENERATE PRIMARIES PARTICLE GUN"<<std::endl;
 
    GlueXUserOptions *user_opts = GlueXUserOptions::GetInstance();
    std::map<int,int> dirclutpars; 
@@ -418,17 +418,15 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
      phip = vec.phi();
      
      double x(-2938.), y(0), z(5858.);
-     if(dirclutpars[1] != 0){
-       G4double arr[] = {-812.5, -297.5, 297.5, 812.5};
-       y = arr[dirclutpars[1]/12]-193.3+(dirclutpars[1]%12)*35.15;
-       if(dirclutpars[1] > 24){
-	 x = 2938.;
-	 y = arr[dirclutpars[1]/12]-193.3+(dirclutpars[1])%12*35.15;
-       }
+
+     G4double arr[] = {-812.5, -297.5, 297.5, 812.5};
+     y = arr[dirclutpars[1]/12]-193.3+(dirclutpars[1]%12)*35.15;
+     if(dirclutpars[1] > 23){
+       x = 2938.;
      }
-     
-     y += 15-30*G4UniformRand();
-     z += 5-10*G4UniformRand();
+
+     //     y += 15-30*G4UniformRand();
+     //     z += 5-10*G4UniformRand();
      fParticleGun->SetParticlePosition(G4ThreeVector(x,y,z));
    }
 

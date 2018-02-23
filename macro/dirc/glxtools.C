@@ -744,9 +744,9 @@ void glx_normalize(TH1F* hists[],Int_t size){
 
 int glx_findPdgId(int pdg){
   int pdgId=0; // electron by default 
-  if(pdg == 13) pdgId=1;
-  if(pdg == 211) pdgId=2;
-  if(pdg == 321) pdgId=3;
-  if(pdg == 2212) pdgId=4;
+  if(fabs(pdg) == 13) pdgId=1;
+  if(fabs(pdg) == 211) pdgId=2;
+  if(fabs(pdg) == 321) pdgId=3;
+  if(fabs(pdg) == 2212) pdgId=4;
   return pdgId;
 }
