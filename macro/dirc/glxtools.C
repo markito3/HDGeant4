@@ -51,6 +51,7 @@ DrcEvent* glx_event(0);
 
 const Int_t  glx_nrow(6),glx_ncol(18);
 const Int_t  glx_npmt(glx_nrow*glx_ncol);
+const Int_t  glx_npix(glx_npmt*64);
 
 TChain*  glx_ch(0);
 Int_t    glx_entries(0), glx_momentum(0),glx_pdg(0),glx_test1(0),glx_test2(0);
@@ -63,6 +64,13 @@ TCanvas* glx_cdigi;
 TClonesArray* glx_events;
 int glx_apdg[]={11,13,211,321,2212};
 double glx_mass[] = {0.000511,0.1056584,0.139570,0.49368,0.9382723};
+TString glx_names[] = {"electron","muon","pion","kaon","proton"};
+
+Int_t glx_getChNum(Int_t npmt, Int_t npix){
+  Int_t ch = -1;
+  ch = 64*npmt+npix;
+  return ch;
+}
 
 TString glx_drawDigi(TString digidata="", Int_t layoutId = 0, Double_t maxz = 0, Double_t minz = 0){
   if(!glx_cdigi) glx_cdigi = new TCanvas("glx_cdigi","glx_cdigi",800,350);
