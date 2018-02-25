@@ -17,7 +17,7 @@ void drawHP(TString infile="drc.root"){
     	Int_t pix = hit.GetPixelId();
     	TVector3 gpos = hit.GetPosition();
     	Double_t time = hit.GetLeadTime();
-    	if(pmt<108) glx_hdigi[pmt]->Fill(pix%8, 7-pix/8);
+    	if(pmt<108 && hit.GetPathId()==828) glx_hdigi[pmt]->Fill(pix%8, 7-pix/8);
     	//if(pmt>=108) glx_hdigi[pmt-108]->Fill(pix%8, 7-pix/8);
       }
     }

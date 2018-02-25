@@ -417,12 +417,12 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
      thetap = vec.theta();
      phip = vec.phi();
      
-     double x(-2938.), y(0), z(5858.);
+     double x(-2940), y(0), z(5858.);
      if(dirclutpars[1] != 0){
        G4double arr[] = {-812.5, -297.5, 297.5, 812.5};
        y = arr[dirclutpars[1]/12]-193.3+(dirclutpars[1]%12)*35.15;
        if(dirclutpars[1] > 24){
-	 x = 2938.;
+	 x = 2940;
 	 y = arr[dirclutpars[1]/12]-193.3+(dirclutpars[1])%12*35.15;
        }
      }

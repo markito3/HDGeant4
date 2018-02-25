@@ -12,7 +12,9 @@ DIRCLUT 1
 
 c particle  momentum  theta  phi  delta_momentum delta_theta delta_phi
 c KINE    1050  0.000000003   90.  0.      0.            0.        0.
-c KINE     108      4.       11.  -90.      0.            0.        0.
+
+cKINE     108      4.       11.  -90.      0.            0.        0.
+cKINE     111      4.       11.  -90.      0.            0.        0.
 
 c KINE     114      4.       11.  -90.      0.            0.        0.
 c KINE     112      4.       6.    0.      0.            10.        360.

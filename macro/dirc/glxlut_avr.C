@@ -3,6 +3,9 @@
 #include <TVector3.h>
 #include <TInterpreter.h>
 #include <TClonesArray.h>
+#include <TCanvas.h>
+#include <TH1F.h>
+
 
 #include "../../../../sim-recon/master/src/plugins/Analysis/lut_dirc/DrcLutNode.h"
 
@@ -52,6 +55,8 @@ void glxlut_avr(TString baseFile = "lut.root"){
   Double_t angle, minangle,pathid,time,sumt;
   DrcLutNode *node;
 
+  TH1F *h1 = new TH1F("h1","h1",200,-1,1);
+  
   for(size_t l=0; l<48; l++){
     t->GetEntry(l);
     for (Int_t inode=0; inode<fLut[l]->GetEntriesFast(); inode++){
@@ -82,17 +87,24 @@ void glxlut_avr(TString baseFile = "lut.root"){
 	  pArray.push_back(pathid);
 	}
       }
-  
+      
       for(size_t j=0; j<pArray.size(); j++){
 	sum = TVector3(0,0,0);
 	sumt=0;
+	//if(pArray[j]!=4715) continue;
+	//if(vArray[j].size()<2) continue;
 	for(size_t v=0; v<vArray[j].size(); v++) {
 	  sum += vArray[j][v]; 
-	  sumt += tArray[j][v]; 
+	  sumt += tArray[j][v];
+	  
+	  //std::cout<<pArray[j]<< " vArray[j][v].Y() "<<vArray[j][v].Y()<<" "<<vArray[j][v].Z()<<std::endl;	  
+	  // h1->Fill(vArray[j][v].Y());
 
 	  // hDir->Fill(vArray[j][v].X());
 	  // hTime->Fill(tArray[j][v]);
 	}
+
+	
       
 	// c->cd(1);
 	// hTime->Draw();
@@ -103,7 +115,7 @@ void glxlut_avr(TString baseFile = "lut.root"){
 	// hDir->Reset();
 	// hTime->Reset();
 
-	if(vArray[j].size()<1) continue;
+	if(vArray[j].size()<5) continue;
 	Double_t weight = 1/(Double_t)vArray[j].size(); 
 	sum *= weight;
 	sumt *= weight;
@@ -114,7 +126,13 @@ void glxlut_avr(TString baseFile = "lut.root"){
       pArray.clear();
     }
   }
-
+  
+  // TCanvas *c = new TCanvas("c","c",800,500);
+  // h1->Draw();
+  // c->Update();
+  // c->WaitPrimitive();
+      
+  
   fTreeNew->Fill();
   fTreeNew->Write();
   //fFileNew->Write();

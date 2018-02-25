@@ -4,7 +4,10 @@
 #include "glxtools.C"
 
 //void reco_lut(TString infile="hit_k_pi.root",TString inlut="lut_50M_cs_avr.root"){
-void reco_lut(TString infile="hit_k_pi.root",TString inlut="lut_50M_avr.root"){
+//void reco_lut(TString infile="hit_k_pi.root",TString inlut="lut_50M_avr.root"){
+//void reco_lut(TString infile="hit_k_pi_1.root",TString inlut="lut_10M_avr.root"){
+void reco_lut(TString infile="out_pi_k_1k.root",TString inlut="lut_20X_avr.root"){
+//void reco_lut(TString infile="hit_k_pi_2.root",TString inlut="lut_20N_avr.root"){
   if(!glx_initc(infile,1,"data/reco_lut")) return;
 
   TFile *fLut = new TFile(inlut);
@@ -21,7 +24,7 @@ void reco_lut(TString infile="hit_k_pi.root",TString inlut="lut_50M_avr.root"){
   TVector3 fnY1 = TVector3( 0,1,0);
   TVector3 fnZ1 = TVector3( 0,0,1);
   double radiatorL = 4*1225; 
-  double barend = 2938; //3036.05;
+  double barend = 2939.5; //3036.05;
   double minChangle = 0.6;
   double maxChangle = 0.9;
   double sum1,sum2,noise = 0.3;
@@ -34,7 +37,7 @@ void reco_lut(TString infile="hit_k_pi.root",TString inlut="lut_50M_avr.root"){
   TH1F *hAngle[5], *hLnDiff[5];
   TF1  *fAngle[5];
   double mAngle[5];
-  TH1F *hDiff = new TH1F("hDiff",";t_{calc}-t_{measured} [ns];entries [#]", 500,-10,10);
+  TH1F *hDiff = new TH1F("hDiff",";t_{calc}-t_{measured} [ns];entries [#]", 500,-100,100);
   TH1F *hTime = new TH1F("hTime",";propagation time [ns];entries [#]",   1000,0,100);
   TH1F *hCalc = new TH1F("hCalc",";calculated time [ns];entries [#]",   1000,0,100);
   TH1F *hNph = new TH1F("hNph",";detected photons [#];entries [#]", 150,0,150);
@@ -47,7 +50,7 @@ void reco_lut(TString infile="hit_k_pi.root",TString inlut="lut_50M_avr.root"){
     fAngle[i] = new TF1(Form("fAngle_%d",i),"[0]*exp(-0.5*((x-[1])/[2])*(x-[1])/[2])",0.7,0.9);
     fAngle[i]->SetParameter(0,1);        // const
     fAngle[i]->SetParameter(1,mAngle[i]);// mean
-    fAngle[i]->SetParameter(2,0.007);    // sigma
+    fAngle[i]->SetParameter(2,0.009);    // sigma
     hAngle[i]->SetMarkerStyle(20);
     hAngle[i]->SetMarkerSize(0.8);
  
@@ -72,11 +75,9 @@ void reco_lut(TString infile="hit_k_pi.root",TString inlut="lut_50M_avr.root"){
       momInBar = glx_event->GetMomentum();
       int pdgId = glx_findPdgId(glx_event->GetPdg());
       if(glx_event->GetParent()>0) continue;
-									    
-      if(glx_event->GetPosition().Y()<0) lenz = fabs(barend+glx_event->GetPosition().X()*10);
-      else lenz =fabs(glx_event->GetPosition().X()*10-barend);
-
-      int ncount=0;
+      
+      
+      
       sum1=0;
       sum2=0;
       int nph=0;
@@ -89,44 +90,53 @@ void reco_lut(TString infile="hit_k_pi.root",TString inlut="lut_50M_avr.root"){
     	double hitTime = hit.GetLeadTime()-glx_event->GetTime();
 	TVector3 gpos = hit.GetPosition();
 
-	//	if(hitTime<40) continue;
+	//if(hitTime<40) continue;
 	
 	bool reflected = hitTime>40;
+	if(glx_event->GetPosition().Y()<0) lenz = fabs(barend+glx_event->GetPosition().X()*10);
+	else lenz =fabs(glx_event->GetPosition().X()*10-barend);
+	
 	if(reflected) lenz = 2*radiatorL - lenz;
+	
 	int sensorId = 100*pmt + pix;
 	bool isGood(false);
-	
+
+	double p1,p2;
 	for(int i = 0; i < lutNode[sensorId]->Entries(); i++){
 	  dird   = lutNode[sensorId]->GetEntry(i);
 	  evtime = lutNode[sensorId]->GetTime(i);
 	  pathid = lutNode[sensorId]->GetPathId(i);
 	  bool samepath(false);
-	  if(fabs(pathid-hit.GetPathId())<0.0001) samepath=true;	  	  
-	  if(!samepath) continue;
-	  
+	  if(fabs(pathid-hit.GetPathId())<0.0001) samepath=true;
+	  //std::cout<<"pathid "<<pathid<<" -  "<<hit.GetPathId()<<std::endl;
+	  p1=hit.GetPathId();
+	  if(samepath){
+	    p2=pathid;	    
+	  }
+	  //if(!samepath) continue;
+
 	  for(int u = 0; u < 4; u++){
 	    if(u == 0) dir = dird;
-	    if(u == 1) dir.SetXYZ( dird.X(), -dird.Y(),  dird.Z());
-	    if(u == 2) dir.SetXYZ( dird.X(),  dird.Y(), -dird.Z());
+	    if(u == 1) dir.SetXYZ( dird.X(),-dird.Y(),  dird.Z());
+	    if(u == 2) dir.SetXYZ( dird.X(), dird.Y(), -dird.Z());
 	    if(u == 3) dir.SetXYZ( dird.X(),-dird.Y(), -dird.Z());
 	    if(reflected) dir.SetXYZ( -dir.X(), dir.Y(), dir.Z());
 	    if(dir.Angle(fnY1) < criticalAngle || dir.Angle(fnZ1) < criticalAngle) continue;
 
-	    TVector3 vt = dir;
-	    vt.RotateY(TMath::PiOver2());
-	    luttheta = vt.Theta();	  
+	    luttheta = dir.Angle(TVector3(-1,0,0));	    
 	    if(luttheta > TMath::PiOver2()) luttheta = TMath::Pi()-luttheta;
 	    
 	    tangle = momInBar.Angle(dir);//-0.002; //correction
-	    double bartime = fabs(lenz/cos(luttheta)/203.76); //198 //203.767 for 1.47125
+	    double bartime = lenz/cos(luttheta)/203.76; //198 //203.767 for 1.47125
+
+	    //std::cout<<"bartime "<<bartime <<"   "<<luttheta <<" "<<lenz<<std::endl;
+	    
 	    double totalTime = bartime+evtime;
 
-	    if(fabs(totalTime-hitTime)>10) continue;
-	    if(fabs(tangle-0.82)>0.3) continue;
+	    if(fabs(totalTime-hitTime)>2) continue;
+	    if(fabs(tangle-0.82)>0.05) continue;
 	      
 	    isGood=true;
-	    ncount++;
-	    //	    if(ncount>1) continue;
 	   
 	    hAngle[pdgId]->Fill(tangle);
 	    hDiff->Fill(totalTime-hitTime);
@@ -138,14 +148,20 @@ void reco_lut(TString infile="hit_k_pi.root",TString inlut="lut_50M_avr.root"){
 	    
 	  }
 	}
-	if(!isGood) {
+	// std::cout<<sensorId<<" p1 "<<p1<<" p2 "<<p2;
+	//   if(fabs(p1-p2)<0.0001) 	std::cout<<" <------------ M";
+	// std::cout	 <<std::endl;
+	
+	
+	if(isGood) {
 	  nph++;
 	  if(pmt<108) glx_hdigi[pmt]->Fill(pix%8, 7-pix/8);
 	}
       }
       hNph->Fill(nph);
+      //std::cout<<" sum1 "<<sum1<<" sum2 "<<sum2<<std::endl;
       
-      // std::cout<<"ncount "<<ncount<<std::endl;            
+      
       double sum = sum1-sum2;
       hLnDiff[pdgId]->Fill(sum);
       

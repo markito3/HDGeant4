@@ -177,9 +177,9 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
     if(valid){
       int mid=0;
       if(volname == "OWDG"){
-	if(fabs(localNormal.y()+1)<0.001) mid=1;
-	else if(fabs(localNormal.y()-1)<0.001) mid=2;
-	else if(fabs(localNormal.z()-1)<0.01)  mid=3;
+	if (localNormal.y()<-0.999) mid=1;
+	else if(localNormal.y()>0.999) mid=2;
+	else if(localNormal.z()>0.999) mid=3;
 	else if(fabs(localNormal.z()+0.86)<0.01) mid=4;
 	else mid=0;
       }
@@ -191,8 +191,9 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
       if(volname == "TSM1") mid=10;
       if(volname == "TSM2") mid=11;
       if(volname == "TSM3") mid=12;
+
+      //std::cout<<"lll "<<localNormal.x() <<" "<< localNormal.y() <<" "<< localNormal.z()<<std::endl;
       
-      std::cout<<"mid "<<mid<< "  "<< localNormal.x() <<" "<< localNormal.y() <<" "<<localNormal.z() <<std::endl;
       
       if(mid!=0){
 	G4double normalId = mid;// localNormal.x() + 10*localNormal.y() + 100*localNormal.z();
@@ -222,17 +223,47 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
       pmthit.ch = (box*108+pmt)*64+pix;
       pmthit.key_bar = fHitsBar.size()-1;
 
-      if(fHitsWob.size()>12) fHitsWob.clear();
+      //if(fHitsWob.size()>12) fHitsWob.clear();
       
-      G4double pathId = 0;
+      int pathId1 = 0;
+      int pathId2 = 0;
+      int pathId3 = 0;
       G4int refl=0;
       for (unsigned int i=0;i<fHitsWob.size();i++){
-	if(fHitsWob[i].track == track->GetTrackID()) {	  
-	  pathId +=fHitsWob[i].normalId*100*(++refl);
-	  std::cout<<refl<<" normalId  "<<fHitsWob[i].normalId << " pathId  "<< pathId<<std::endl;	  
+	if(fHitsWob[i].track == track->GetTrackID()) {
+	  refl++;
+	  if(refl <= 6) pathId1 += pathId1*12 + fHitsWob[i].normalId;
+	  else if(refl > 6 && refl <= 12) pathId2 += pathId2*12 + fHitsWob[i].normalId;
+	  else pathId3 += fHitsWob[i].normalId;  
+	  //std::cout<<refl<<" normalId  "<<fHitsWob[i].normalId << " pathId  "<< pathId<<std::endl;	  
 	}
       }
-      std::cout<<" ---------------------------------------------  "<<(int)fHitsPmt.size()<<std::endl;     
+
+      int pathId=pathId1+pathId2+pathId3;
+
+      // if(pathId==4715){
+      // 	pathId = 0;
+      // 	pathId1 = 0;
+      // 	pathId2 = 0;
+      // 	pathId3 = 0;
+      // 	refl=0;	
+      // 	for (unsigned int i=0;i<fHitsWob.size();i++){
+      // 	  if(fHitsWob[i].track == track->GetTrackID()) {
+      // 	    refl++;
+      // 	    if(refl <= 6) pathId1 += pathId1*12 + fHitsWob[i].normalId;
+      // 	    else if(refl > 6 && refl <= 12) pathId2 += pathId2*12 + fHitsWob[i].normalId;
+      // 	    else pathId3 += fHitsWob[i].normalId;  
+      // 	    std::cout<<refl<<" normalId  "<<fHitsWob[i].normalId << " pathId  "<< pathId<<std::endl;
+      // 	  }
+      // 	}
+      // 	pathId=pathId1+pathId2+pathId3;
+      // 	std::cout<<" ---------------------------------------------  "<<(int) fHitsPmt.size()<<" "<<fHitsWob.size()<<" pmt "<<pmt<<" pix "<<pix<<"  pathId "<<pathId<<std::endl;
+      // 	G4ThreeVector m = track->GetVertexMomentumDirection();
+      // 	std::cout<<"x "<<m.x()<<" y "<<m.y()<<" z "<<m.z()<<std::endl;
+	
+      // }
+      
+
       
       pmthit.E_GeV = pathId; // save path id into E_GeV
       if(fLutId){
@@ -253,7 +284,7 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
 
 void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
 {
-  if (fHitsBar.size() == 0 || fHitsPmt.size() == 0 || fHitsWob.size() == 0){
+  if ((fHitsBar.size() == 0 && !fLutId) || fHitsPmt.size() == 0 || fHitsWob.size() == 0){
     fHitsBar.clear();
     fHitsPmt.clear();
     fHitsWob.clear();
