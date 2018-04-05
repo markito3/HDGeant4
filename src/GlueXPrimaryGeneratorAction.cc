@@ -405,27 +405,27 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
       phip += (G4UniformRand() - 0.5) * fGunParticle.deltaPhi;
 
    if (user_opts->Find("DIRCLUT", dirclutpars)){
+     double x(2940), y(0), z(5858.);
      G4ThreeVector vec(0,0,1);
      double rand1 = G4UniformRand();
      double rand2 = G4UniformRand();
      vec.setTheta(acos(rand1));
      vec.setPhi(2*M_PI*rand2);
      vec.rotateY(M_PI/2.);
+     //double arr[] = {-812.5, -297.5, 297.5, 812.5};
+     double arr[] = {-297.5+193.3, -812.5+193.3, 297.5-193.3, 812.5-193.3};
+     y = arr[dirclutpars[1]/12]+(dirclutpars[1]%12)*35.15;
      if(dirclutpars[1] < 24){
        vec.rotateY(M_PI);
+       x = -2940;
+       y = arr[dirclutpars[1]/12]-(dirclutpars[1]%12)*35.15;
      }
-     thetap = vec.theta();
-     phip = vec.phi();
      
-     double x(-2940), y(0), z(5858.);
-     G4double arr[] = {-812.5, -297.5, 297.5, 812.5};
-     y = arr[dirclutpars[1]/12]-193.3+(dirclutpars[1]%12)*35.15;
-     if(dirclutpars[1] > 23){
-       x = 2940.;
-     }
-
      y += 15-30*G4UniformRand();
      z += 8-16*G4UniformRand();
+
+     thetap = vec.theta();
+     phip = vec.phi();
      fParticleGun->SetParticlePosition(G4ThreeVector(x,y,z));
    }
 

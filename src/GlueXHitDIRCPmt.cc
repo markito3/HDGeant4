@@ -25,7 +25,9 @@ void GlueXHitDIRCPmt::Print() const
 	 << "   x = " << x_cm << " cm" << G4endl
 	 << "   y = " << y_cm << " cm" << G4endl
 	 << "   z = " << z_cm << " cm" << G4endl
-	 << "   ch = " << ch << " " << G4endl
+	 << "   path = " << path << " " << G4endl
+	 << "   refl = " << refl << " " << G4endl
+    	 << "   ch = " << ch << " " << G4endl
 	 << "   key_bar = " << key_bar << " " << G4endl
 	 << G4endl;
 }

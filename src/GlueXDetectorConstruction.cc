@@ -461,7 +461,8 @@ void GlueXDetectorConstruction::CloneF()
             // First time we see this FM, let's clone and remember...
 
             G4ChordFinder *cfinder = masterFM->GetChordFinder();
-            G4MagInt_Driver *midriver = cfinder->GetIntegrationDriver();
+            //G4MagInt_Driver *midriver = cfinder->GetIntegrationDriver();
+	    G4MagInt_Driver *midriver = (G4MagInt_Driver*)cfinder->GetIntegrationDriver();
             double stepMinimum = midriver->GetHmin();
             G4MagIntegratorStepper *stepper = midriver->GetStepper();
             const G4Field *field = masterFM->GetDetectorField();
