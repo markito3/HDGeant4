@@ -51,7 +51,8 @@ DrcEvent* glx_event(0);
 
 const Int_t  glx_nrow(6),glx_ncol(18);
 const Int_t  glx_npmt(glx_nrow*glx_ncol);
-const Int_t  glx_npix(glx_npmt*64);
+const Int_t  glx_npix(64);
+const Int_t  glx_npixtot(glx_npmt*glx_npix);
 
 TChain*  glx_ch(0);
 Int_t    glx_entries(0), glx_momentum(0),glx_pdg(0),glx_test1(0),glx_test2(0);
@@ -757,4 +758,11 @@ int glx_findPdgId(int pdg){
   if(fabs(pdg) == 321) pdgId=3;
   if(fabs(pdg) == 2212) pdgId=4;
   return pdgId;
+}
+
+void glx_normalize(TH1F* h1,TH1F* h2){
+  Double_t max = (h1->GetMaximum()>h2->GetMaximum())? h1->GetMaximum() : h2->GetMaximum();
+  max += max*0.1;
+  h1->GetYaxis()->SetRangeUser(0,max);
+  h2->GetYaxis()->SetRangeUser(0,max);
 }

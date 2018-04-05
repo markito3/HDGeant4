@@ -45,7 +45,7 @@ void reco_lut(TString infile="out_pi_k_1k.root",TString inlut="lut_20X_avr.root"
   
   double momentum=4;
   for(int i=0; i<5; i++){
-    hAngle[i]= new TH1F(Form("hAngle_%d",i),  "chrenkov angle;#theta_{C} [rad];entries/N_{max} [#]", 250,0.6,1);
+    hAngle[i]= new TH1F(Form("hAngle_%d",i),  "cherenkov angle;#theta_{C} [rad];entries/N_{max} [#]", 250,0.6,1);
     mAngle[i] = acos(sqrt(momentum * momentum + glx_mass[i]*glx_mass[i])/momentum/1.4738);  //1.4738
     fAngle[i] = new TF1(Form("fAngle_%d",i),"[0]*exp(-0.5*((x-[1])/[2])*(x-[1])/[2])",0.7,0.9);
     fAngle[i]->SetParameter(0,1);        // const
@@ -54,7 +54,7 @@ void reco_lut(TString infile="out_pi_k_1k.root",TString inlut="lut_20X_avr.root"
     hAngle[i]->SetMarkerStyle(20);
     hAngle[i]->SetMarkerSize(0.8);
  
-    hLnDiff[i] = new TH1F(Form("hLnDiff_%d",i),";ln L(p) - ln L(#pi);entries [#]",200,-30,30);
+    hLnDiff[i] = new TH1F(Form("hLnDiff_%d",i),";ln L(p) - ln L(#pi);entries [#]",200,-200,200);
   }
   hAngle[2]->SetLineColor(4);
   hAngle[3]->SetLineColor(2);
@@ -133,8 +133,8 @@ void reco_lut(TString infile="out_pi_k_1k.root",TString inlut="lut_20X_avr.root"
 	    
 	    double totalTime = bartime+evtime;
 
-	    if(fabs(totalTime-hitTime)>2) continue;
-	    if(fabs(tangle-0.82)>0.05) continue;
+	    if(fabs(totalTime-hitTime)>1.5) continue;
+	    if(fabs(tangle-0.82)>0.15) continue;
 	      
 	    isGood=true;
 	   
