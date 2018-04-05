@@ -8,10 +8,36 @@
 
 TClonesArray *fLutSum[48];
 
-void glxlut_add(TString inFile = "l_b*.root", TString outFile = "lut_all.root"){
+
+void adddirs(TString filename){
+  TFile* f = new TFile(filename);
+  TTree *t=(TTree *) f->Get("lut_dirc") ;
+  TClonesArray* fLut[48];
+  for(int l=0; l<48; l++){
+    fLut[l] = new TClonesArray("DrcLutNode");
+    t->SetBranchAddress(Form("LUT_%d",l),&fLut[l]); 
+  }
+  t->GetEntry(0);
+  std::cout<<filename<<" has "<<fLut[0]->GetEntriesFast()<< " entries" <<std::endl;
+  for(size_t l=0; l<48; l++){
+    for (int inode=0; inode<fLut[l]->GetEntriesFast(); inode++){
+      DrcLutNode *node= (DrcLutNode*) fLut[l]->At(inode);
+      for(int i=0; i< node->Entries(); i++){
+	((DrcLutNode*)(fLutSum[l]->At(inode)))->AddEntry(node->GetLutId(),node->GetDetectorId(), node->GetEntry(i), node->GetPathId(i), node->GetNRefl(i), node->GetTime(i), node->GetHitPos(i), node->GetDigiPos());
+      }
+      delete node;
+    }
+  }
+  for(int l=0; l<48; l++) fLut[l]->Clear();
+    
+  f->Close();
+}
+
+
+void glxlut_add(TString inFile = "lut_*_avr.root", TString outFile = "lut_all_avr.root"){
 
   TTree *fTreeNew = new TTree("lut_dirc","Look-up table for DIRC");
-  for(Int_t l=0; l<48; l++){
+  for(int l=0; l<48; l++){
     fLutSum[l] = new TClonesArray("DrcLutNode");
     fTreeNew->Branch(Form("LUT_%d",l),&fLutSum[l],256000,0); 
   }
@@ -19,7 +45,7 @@ void glxlut_add(TString inFile = "l_b*.root", TString outFile = "lut_all.root"){
   int Nnodes = 30000;
   for(int l=0; l<48; l++){
     TClonesArray &fLutaSum = *fLutSum[l];
-    for (Long64_t n=0; n<Nnodes; n++) {
+    for (int n=0; n<Nnodes; n++) {
       new((fLutaSum)[n]) DrcLutNode(-1);
     }
   }
@@ -65,27 +91,3 @@ void glxlut_add(TString inFile = "l_b*.root", TString outFile = "lut_all.root"){
   
 }
 
-
-void adddirs(TString filename){
-  TFile* f = new TFile(filename);
-  TTree *t=(TTree *) f->Get("glxlut") ;
-  TClonesArray* fLut[48];
-  for(size_t l=0; l<48; l++){
-    fLut[l] = new TClonesArray("DrcLutNode");
-    t->SetBranchAddress(Form("LUT_%d",l),&fLut[l]); 
-  }
-  t->GetEntry(0);
-  std::cout<<filename<<" has "<<fLut[0]->GetEntriesFast()<< " entries" <<std::endl;
-  for(size_t l=0; l<48; l++){
-    for (int inode=0; inode<fLut[l]->GetEntriesFast(); inode++){
-      DrcLutNode *node= (DrcLutNode*) fLut[l]->At(inode);
-      for(int i=0; i< node->Entries(); i++){
-	((DrcLutNode*)(fLutSum[l]->At(inode)))->AddEntry(node->GetLutId(),node->GetDetectorId(), node->GetEntry(i), node->GetPathId(i), node->GetNRefl(i), node->GetTime(i), node->GetHitPos(i), node->GetDigiPos());
-      }
-      delete node;
-    }
-  }
-  for(int l=0; l<48; l++) fLut[l]->Clear();
-    
-  f->Close();
-}

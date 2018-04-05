@@ -618,7 +618,7 @@ void glx_save(TPad *c= NULL,TString path="", TString name="", Int_t what=0, Int_
       }
 
       TCanvas *cc;
-      if(TString(c->GetName()).Contains("cdigi")) cc = (TCanvas*) c;
+      if(TString(c->GetName()).Contains("cdigi") || TString(c->GetName()).Contains("hp_")) cc = (TCanvas*) c;
       else {
 	cc = new TCanvas(TString(c->GetName())+"exp","cExport",0,0,w,h);
 	cc = (TCanvas*) c->DrawClone();      
@@ -665,10 +665,12 @@ void glx_save(TPad *c= NULL,TString path="", TString name="", Int_t what=0, Int_
       
       cc->Print(path+"/"+name+".png");
       if(what==0) cc->Print(path+"/"+name+".pdf");
+      if(what==0) cc->Print(path+"/"+name+".eps");
       if(what==0) cc->Print(path+"/"+name+".root");
     }else{
       c->Print(path+"/"+name+".png");
       if(what==0) c->Print(path+"/"+name+".pdf");
+      if(what==0) c->Print(path+"/"+name+".eps");
       if(what==0) c->Print(path+"/"+name+".root");
     }
     gROOT->SetBatch(0);

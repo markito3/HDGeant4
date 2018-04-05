@@ -27,6 +27,8 @@ public:
   G4double x_cm;       // x coordinate where hit was created
   G4double y_cm;       // y coordinate where hit was created
   G4double z_cm;       // z coordinate where hit was created
+  int64_t  path;       // photon's path id in the optical box
+  G4int    refl;       // number of reflections in the oprical box
   G4int    ch;         // PMT channel of the hit
   G4int    key_bar;    // key of the corresponding bar hit
 };

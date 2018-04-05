@@ -69,7 +69,7 @@ GlueXSensitiveDetectorDIRC::GlueXSensitiveDetectorDIRC(const G4String& name)
   std::map<int, int> dirclutpars;
   if (user_opts->Find("DIRCLUT", dirclutpars)){
     fLutId = dirclutpars[1];
-  }else fLutId = 0;
+  }else fLutId = 100;
 }
 
     GlueXSensitiveDetectorDIRC::GlueXSensitiveDetectorDIRC(const GlueXSensitiveDetectorDIRC &src)
@@ -96,12 +96,7 @@ void GlueXSensitiveDetectorDIRC::Initialize(G4HCofThisEvent* hce)
 
 G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step, 
                                                G4TouchableHistory* unused)
-{
-
-
-  
-  G4TouchableHistory* touchable = (G4TouchableHistory*)(step->GetPostStepPoint()->GetTouchable());
-  
+{  
   const G4ThreeVector &pin = step->GetPreStepPoint()->GetMomentum();
   const G4ThreeVector &xin = step->GetPreStepPoint()->GetPosition();
   const G4ThreeVector &xout = step->GetPostStepPoint()->GetPosition();
@@ -150,9 +145,9 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
       barhit.py_GeV = pin[1]/GeV;
       barhit.pz_GeV = pin[2]/GeV;
       barhit.pdg = g3type;
-      barhit.bar = touch_hist->GetReplicaNumber(0)/4; // each bar is glued from 4 pieces
+      barhit.bar = (touch_hist->GetReplicaNumber(0)-1)/4; // each bar is glued from 4 pieces
       barhit.track = itrack; // track id of the charged particle
-      fHitsBar.push_back(barhit);
+      fHitsBar.push_back(barhit);      
     }
     return true;
   }
@@ -175,27 +170,23 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
     G4bool valid;
     G4ThreeVector localNormal = (iNav[hNavId])->GetLocalExitNormal(&valid);
     if(valid){
-      int mid=0;
+      int mid=-1;
       if(volname == "OWDG"){
 	if (localNormal.y()<-0.999) mid=1;
 	else if(localNormal.y()>0.999) mid=2;
 	else if(localNormal.z()>0.999) mid=3;
 	else if(fabs(localNormal.z()+0.86)<0.01) mid=4;
-	else mid=0;
       }
       if(volname == "FSM1") mid = 5;
       if(volname == "FSM2") mid = 6;
       if(volname == "FWM1") mid = 7;
       if(volname == "FWM2") mid = 8;
-      if(volname == "FTMR") mid = 9;
-      if(volname == "TSM1") mid=10;
-      if(volname == "TSM2") mid=11;
-      if(volname == "TSM3") mid=12;
+      if(volname == "FTMR") mid = 0;
+      if(volname == "TSM1") mid=91;
+      if(volname == "TSM2") mid=92;
+      if(volname == "TSM3") mid=93;
 
-      //std::cout<<"lll "<<localNormal.x() <<" "<< localNormal.y() <<" "<< localNormal.z()<<std::endl;
-      
-      
-      if(mid!=0){
+      if(mid!=-1){
 	G4double normalId = mid;// localNormal.x() + 10*localNormal.y() + 100*localNormal.z();
 	wobhit.normalId = normalId;
 	fHitsWob.push_back(wobhit);
@@ -209,67 +200,51 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
   if (volname == "PIXV"){
     if ((int)fHitsPmt.size() < MAX_HITS){
 
+      //fix propagation speed for op
+      double tracklen=track->GetTrackLength()/cm;
+      double en=Ein/GeV;
+      double refindex= 1.43603+0.0132404*en-0.00225287*en*en+0.000500109*en*en*en;  
+      double time_fixed=tracklen/(29.9792458/refindex);
+
       GlueXHitDIRCPmt pmthit;
       pmthit.E_GeV = Ein/GeV;
-      pmthit.t_ns = t/ns;
+      pmthit.t_ns = time_fixed; //t/ns;
       pmthit.x_cm = x[0]/cm;
       pmthit.y_cm = x[1]/cm;
       pmthit.z_cm = x[2]/cm;
       
-      G4double box = touch_hist->GetReplicaNumber(3)-1; // [0,1]
-      G4double pmt = touch_hist->GetReplicaNumber(1)-1; // [0,107]
-      G4double pix = touch_hist->GetReplicaNumber(0)-1; // [0,63]
+      double box = touch_hist->GetReplicaNumber(3)-1; // [0,1]
+      double pmt = touch_hist->GetReplicaNumber(1)-1; // [0,107]
+      double pix = touch_hist->GetReplicaNumber(0)-1; // [0,63]
 
       pmthit.ch = (box*108+pmt)*64+pix;
       pmthit.key_bar = fHitsBar.size()-1;
 
-      //if(fHitsWob.size()>12) fHitsWob.clear();
-      
-      int pathId1 = 0;
-      int pathId2 = 0;
-      int pathId3 = 0;
-      G4int refl=0;
+      int64_t pathId1 = 0;
+      int64_t pathId2 = 0;
+      int mid, refl=0;
       for (unsigned int i=0;i<fHitsWob.size();i++){
 	if(fHitsWob[i].track == track->GetTrackID()) {
 	  refl++;
-	  if(refl <= 6) pathId1 += pathId1*12 + fHitsWob[i].normalId;
-	  else if(refl > 6 && refl <= 12) pathId2 += pathId2*12 + fHitsWob[i].normalId;
-	  else pathId3 += fHitsWob[i].normalId;  
-	  //std::cout<<refl<<" normalId  "<<fHitsWob[i].normalId << " pathId  "<< pathId<<std::endl;	  
+	  mid =fHitsWob[i].normalId;
+	  if(refl <= 18){
+	    if(mid<10) pathId1 = pathId1*10 + mid;
+	    else  pathId1 = pathId1*100 + mid;
+	  }else if(refl > 18 && refl < 26){
+	    if(mid<10) pathId2 = pathId2*10 + mid;
+	    else  pathId2 = pathId2*100 + mid;
+	  }
 	}
       }
-
-      int pathId=pathId1+pathId2+pathId3;
-
-      // if(pathId==4715){
-      // 	pathId = 0;
-      // 	pathId1 = 0;
-      // 	pathId2 = 0;
-      // 	pathId3 = 0;
-      // 	refl=0;	
-      // 	for (unsigned int i=0;i<fHitsWob.size();i++){
-      // 	  if(fHitsWob[i].track == track->GetTrackID()) {
-      // 	    refl++;
-      // 	    if(refl <= 6) pathId1 += pathId1*12 + fHitsWob[i].normalId;
-      // 	    else if(refl > 6 && refl <= 12) pathId2 += pathId2*12 + fHitsWob[i].normalId;
-      // 	    else pathId3 += fHitsWob[i].normalId;  
-      // 	    std::cout<<refl<<" normalId  "<<fHitsWob[i].normalId << " pathId  "<< pathId<<std::endl;
-      // 	  }
-      // 	}
-      // 	pathId=pathId1+pathId2+pathId3;
-      // 	std::cout<<" ---------------------------------------------  "<<(int) fHitsPmt.size()<<" "<<fHitsWob.size()<<" pmt "<<pmt<<" pix "<<pix<<"  pathId "<<pathId<<std::endl;
-      // 	G4ThreeVector m = track->GetVertexMomentumDirection();
-      // 	std::cout<<"x "<<m.x()<<" y "<<m.y()<<" z "<<m.z()<<std::endl;
-	
-      // }
+      int64_t pathId=pathId1+pathId2;
+      if(refl>19) pathId *=-1;
       
-
+      pmthit.path = pathId;
+      pmthit.refl = refl;
       
-      pmthit.E_GeV = pathId; // save path id into E_GeV
-      if(fLutId){
+      if(fLutId<48){
 	//G4ThreeVector vmom = track->GetVertexMomentumDirection();
 	pmthit.key_bar = fLutId;
-	if(fHitsBar.size()>0)fHitsBar[0].pdg=refl;
       }
 
       fHitsPmt.push_back(pmthit);
@@ -284,14 +259,14 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
 
 void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
 {
-  if ((fHitsBar.size() == 0 && !fLutId) || fHitsPmt.size() == 0 || fHitsWob.size() == 0){
+  if ((fHitsBar.size() == 0 && !(fLutId<48)) || fHitsPmt.size() == 0 || fHitsWob.size() == 0){
     fHitsBar.clear();
     fHitsPmt.clear();
     fHitsWob.clear();
     return;
   }
   
-  if (verboseLevel > 1) { 
+  if (verboseLevel > 1) {
     G4cout << G4endl
 	   << "--------> Hits Collection: in this event there are "
 	   << fHitsBar.size() << " bar hits:"
@@ -308,7 +283,6 @@ void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
   }
 
   // pack hits into ouptut hddm record
- 
   G4EventManager* mgr = G4EventManager::GetEventManager();
   G4VUserEventInformation* info = mgr->GetUserInformation();
   hddm_s::HDDM *record = ((GlueXUserEventInformation*)info)->getOutputRecord();
@@ -341,7 +315,7 @@ void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
     bhit(0).setTrack(fHitsBar[h].track);
   }
 
-  // Collect and output the DircTruthPoints
+  // Collect and output the DircTruthPmtHit
   for(unsigned int h=0; h<fHitsPmt.size(); h++){
     hddm_s::DircTruthPmtHitList mhit = dirc.addDircTruthPmtHits(1);
     mhit(0).setE(fHitsPmt[h].E_GeV);
@@ -351,6 +325,8 @@ void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
     mhit(0).setZ(fHitsPmt[h].z_cm);
     mhit(0).setCh(fHitsPmt[h].ch);
     mhit(0).setKey_bar(fHitsPmt[h].key_bar);
+    mhit(0).setPath(fHitsPmt[h].path);
+    mhit(0).setRefl(fHitsPmt[h].refl);
   }
 
   fHitsBar.clear();
