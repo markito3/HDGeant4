@@ -246,7 +246,7 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
 	//G4ThreeVector vmom = track->GetVertexMomentumDirection();
 	pmthit.key_bar = fLutId;
       }
-
+      G4cout<<"SIZE HITS = "<< fHitsPmt.size()<<G4endl;
       fHitsPmt.push_back(pmthit);
     }else{
       G4cerr << "GlueXSensitiveDetectorDIRC::ProcessHits error: "
