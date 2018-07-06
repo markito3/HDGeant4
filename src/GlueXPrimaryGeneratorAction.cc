@@ -404,25 +404,41 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
    if (fGunParticle.deltaPhi > 0)
       phip += (G4UniformRand() - 0.5) * fGunParticle.deltaPhi;
 
+   // Special case of Cherenkov photon gun for DIRC Look Up Tables (LUT)
    if (user_opts->Find("DIRCLUT", dirclutpars)){
-     double x(2940), y(0), z(5858.);
+
+     // initialize positions (should come from DGeometry, to be implemented by Richard)
+     double x = -1960.0 + 4900.2; // DCML + EPGL-to-wedge
+     double z = 5956.23 - 400.0 + 300.0 + 8.625; // DIRC+DRCC+DCML+DCBR+QZRL
+
+     // array of bar y-positions for LUT (should come from DGeometry, to be implemented by Richard)
+     double y = 0.; // no shift
+     double yDCML = 297.6; // DCML
+     double dyDCML = 515.0; // DCML width
+     double yDCBR = 193.3; // DCBR
+     double dyQZBL = 35.15; // QZBL y height
+     double dzQZBL = 17.25; // QZBL z depth
+     double arr[] = {-1.*(yDCML+dyDCML)+yDCBR, -1.*yDCML+yDCBR, yDCML-yDCBR, yDCML+dyDCML-yDCBR};
+
+     //G4cout<<x<<" "<<y<<" "<<z<<" "<<G4endl;
+     //G4cout<<arr[0]<<" "<<arr[1]<<" "<<arr[2]<<" "<<arr[3]<<G4endl;
+
      G4ThreeVector vec(0,0,1);
      double rand1 = G4UniformRand();
      double rand2 = G4UniformRand();
      vec.setTheta(acos(rand1));
      vec.setPhi(2*M_PI*rand2);
      vec.rotateY(M_PI/2.);
-     //double arr[] = {-812.5, -297.5, 297.5, 812.5};
-     double arr[] = {-297.5+193.3, -812.5+193.3, 297.5-193.3, 812.5-193.3};
-     y = arr[dirclutpars[1]/12]+(dirclutpars[1]%12)*35.15;
+     y = arr[dirclutpars[1]/12]+(dirclutpars[1]%12)*dyQZBL;
      if(dirclutpars[1] < 24){
        vec.rotateY(M_PI);
-       x = -2940;
-       y = arr[dirclutpars[1]/12]-(dirclutpars[1]%12)*35.15;
+       x = -1.*x;
+       y = arr[dirclutpars[1]/12]-(dirclutpars[1]%12)*dyQZBL;
      }
      
-     y += 15-30*G4UniformRand();
-     z += 8-16*G4UniformRand();
+     // spread over end of bar in y and z
+     y += 35.0/2.0 - 35.0*G4UniformRand();
+     z += dzQZBL/2.0 - dzQZBL*G4UniformRand(); 
 
      thetap = vec.theta();
      phip = vec.phi();

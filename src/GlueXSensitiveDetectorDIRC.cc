@@ -141,6 +141,7 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
       barhit.x_cm = x[0]/cm;
       barhit.y_cm = x[1]/cm;
       barhit.z_cm = x[2]/cm;
+      //G4cout<<barhit.x_cm<<" "<<barhit.y_cm<<" "<<barhit.z_cm<<" "<<endl;
       barhit.px_GeV = pin[0]/GeV;
       barhit.py_GeV = pin[1]/GeV;
       barhit.pz_GeV = pin[2]/GeV;
@@ -246,7 +247,7 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
 	//G4ThreeVector vmom = track->GetVertexMomentumDirection();
 	pmthit.key_bar = fLutId;
       }
-      G4cout<<"SIZE HITS = "<< fHitsPmt.size()<<G4endl;
+      //G4cout<<"SIZE HITS = "<< fHitsPmt.size()<<G4endl;
       fHitsPmt.push_back(pmthit);
     }else{
       G4cerr << "GlueXSensitiveDetectorDIRC::ProcessHits error: "
@@ -254,6 +255,9 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
              << G4endl;
     }
   }
+
+  //G4cout<<"SIZE HITS = "<< fHitsPmt.size()<<G4endl;
+
   return true;
 }
 
