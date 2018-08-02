@@ -221,7 +221,12 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
       double pix = touch_hist->GetReplicaNumber(0)-1; // [0,63]
 
       pmthit.ch = (box*108+pmt)*64+pix;
-      pmthit.key_bar = fHitsBar.size()-1;
+      pmthit.key_bar = -999;
+      for (unsigned int i=0;i<fHitsBar.size();i++){ // get bar hit from parent track
+	      if(fHitsBar[i].track == track->GetParentID()) {
+		      pmthit.key_bar = fHitsBar[i].bar;
+	      }
+      }	
 
       int64_t pathId1 = 0;
       int64_t pathId2 = 0;
