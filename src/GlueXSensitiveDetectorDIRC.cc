@@ -28,6 +28,7 @@
 
 // Cutoff on the total number of allowed hits
 int GlueXSensitiveDetectorDIRC::MAX_HITS = 1000;
+int GlueXSensitiveDetectorDIRC::MAX_PIXELS = 6912;
 
 // Minimum hit time difference for two hits on the same tube
 double GlueXSensitiveDetectorDIRC::TWO_HIT_TIME_RESOL = 50*ns;
@@ -216,11 +217,11 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
       pmthit.y_cm = x[1]/cm;
       pmthit.z_cm = x[2]/cm;
       
-      double box = touch_hist->GetReplicaNumber(3)-1; // [0,1]
-      double pmt = touch_hist->GetReplicaNumber(1)-1; // [0,107]
-      double pix = touch_hist->GetReplicaNumber(0)-1; // [0,63]
+      double box = touch_hist->GetReplicaNumber(1)-1; // [0,1]
+      double pix = touch_hist->GetReplicaNumber(0)-1; // [0,6911]
 
-      pmthit.ch = (box*108+pmt)*64+pix;
+      pmthit.ch = box*MAX_PIXELS + pix;
+
       pmthit.key_bar = -999;
       for (unsigned int i=0;i<fHitsBar.size();i++){ // get bar hit from parent track
 	      if(fHitsBar[i].track == track->GetParentID()) {
