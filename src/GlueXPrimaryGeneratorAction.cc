@@ -115,32 +115,12 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 
 		   DIRC_LUT_X = (DCML_ZX[1] + 4*QZBL_DX[0]) * cm;
 		   DIRC_LUT_Z = (DIRC[2] + DRCC[2] + DCML_ZX[0] + QZBL_YZ[1]) * cm;
-		   
-		   double x = -1960.0 + 4900.2; // DCML + EPGL-to-wedge
-		   double z = 5956.23 - 400.0 + 300.0 + 8.625; // DIRC+DRCC+DCML+DCBR+QZRL
-		   G4cout<<"X= "<<x<<" "<<DIRC_LUT_X<<G4endl;
-		   G4cout<<"Z= "<<z<<" "<<DIRC_LUT_Z<<G4endl;
-
-
 		   DIRC_DCML_Y = DCML_Y0[0] * cm;
 		   DIRC_DCML_DY = DCML_DY[0] * cm;
 		   DIRC_DCBR_Y = fabs(DCBR_Y0[0]) * cm;
 		   DIRC_DCBR_DY = DCBR_DY[0] * cm;
 		   DIRC_QZBL_DY = QZBL_DXDYDZ[1] * cm;
 		   DIRC_QZBL_DZ = QZBL_DXDYDZ[2] * cm;
-
-		   // array of bar y-positions for LUT from JGeometry		   
-		   double yDCML = 297.6; // DCML
-		   double dyDCML = 515.0; // DCML width
-		   double yDCBR = 193.3; // DCBR
-		   double dyQZBL = 35.15; // QZBL y height
-		   double dzQZBL = 17.25; // QZBL z depth
-
-		   G4cout<<"DCML_Y= "<<yDCML<<" "<<DIRC_DCML_Y<<G4endl;
-		   G4cout<<"DCML_DY= "<<dyDCML<<" "<<DIRC_DCML_DY<<G4endl;
-		   G4cout<<"DCBR_Y= "<<yDCBR<<" "<<DIRC_DCBR_Y<<G4endl;
-		   G4cout<<"QZBL_DY= "<<dyQZBL<<" "<<DIRC_QZBL_DY<<" "<<DIRC_DCBR_DY<<G4endl;
-		   G4cout<<"QZBL_DZ= "<<dzQZBL<<" "<<DIRC_QZBL_DZ<<G4endl;
 	   }
    }
 
