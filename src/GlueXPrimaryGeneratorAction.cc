@@ -53,7 +53,6 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 {
    G4AutoLock barrier(&fMutex);
    fInstance.push_back(this);
-   ++instanceCount;
 
    // Initializaton is driven by the control.in file, which
    // gets read and parsed only once, by the first constructor.
@@ -73,10 +72,81 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
       exit(-1);
    }
 
+   // get positions for LUT from XML geometry
+   std::map<int, int> dirclutpars;
+   if (instanceCount++ == 0) {
+	   
+	   if(user_opts->Find("DIRCLUT", dirclutpars)) {
+		   
+		   extern int run_number;
+		   extern jana::JApplication *japp;
+		   if (japp == 0) {
+			   G4cerr << "Error in GlueXPrimaryGeneratorAction constructor - "
+				  << "jana global DApplication object not set, "
+				  << "cannot continue." << G4endl;
+			   exit(-1);
+		   }
+		   jana::JGeometry *jgeom = japp->GetJGeometry(run_number);
+		   if (japp == 0) {   // dummy
+			   jgeom = 0;
+			   G4cout << "DIRC: ALL parameters loaded from ccdb" << G4endl;
+		   }
+		   
+		   vector<double>DIRC;
+		   vector<double>DRCC;
+		   vector<double>DCML_ZX;
+		   vector<double>DCML_Y0;
+		   vector<double>DCML_DY;
+		   vector<double>DCBR_Y0;
+		   vector<double>DCBR_DY;
+		   vector<double>QZBL_DX;
+		   vector<double>QZBL_YZ;
+		   vector<double>QZBL_DXDYDZ;
+		   jgeom->Get("//section/composition/posXYZ[@volume='DIRC']/@X_Y_Z", DIRC);
+		   jgeom->Get("//composition[@name='DIRC']/posXYZ[@volume='DRCC']/@X_Y_Z", DRCC);
+		   jgeom->Get("//composition[@name='DRCC']/mposY[@volume='DCML']/@Z_X/plane[@value='3']", DCML_ZX);
+		   jgeom->Get("//composition[@name='DRCC']/mposY[@volume='DCML']/@Y0/plane[@value='3']", DCML_Y0);
+		   jgeom->Get("//composition[@name='DRCC']/mposY[@volume='DCML']/@dY/plane[@value='3']", DCML_DY);
+		   jgeom->Get("//composition[@name='DCML']/mposY[@volume='DCBR']/@Y0", DCBR_Y0);
+		   jgeom->Get("//composition[@name='DCML']/mposY[@volume='DCBR']/@dY", DCBR_DY);
+		   jgeom->Get("//composition[@name='DCBR']/mposX[@volume='QZBL']/@dX", QZBL_DX);
+		   jgeom->Get("//composition[@name='DCBR']/mposX[@volume='QZBL']/@Y_Z", QZBL_YZ);
+		   jgeom->Get("//box[@name='QZBL']/@X_Y_Z", QZBL_DXDYDZ);
+
+		   DIRC_LUT_X = (DCML_ZX[1] + 4*QZBL_DX[0]) * cm;
+		   DIRC_LUT_Z = (DIRC[2] + DRCC[2] + DCML_ZX[0] + QZBL_YZ[1]) * cm;
+		   
+		   double x = -1960.0 + 4900.2; // DCML + EPGL-to-wedge
+		   double z = 5956.23 - 400.0 + 300.0 + 8.625; // DIRC+DRCC+DCML+DCBR+QZRL
+		   G4cout<<"X= "<<x<<" "<<DIRC_LUT_X<<G4endl;
+		   G4cout<<"Z= "<<z<<" "<<DIRC_LUT_Z<<G4endl;
+
+
+		   DIRC_DCML_Y = DCML_Y0[0] * cm;
+		   DIRC_DCML_DY = DCML_DY[0] * cm;
+		   DIRC_DCBR_Y = fabs(DCBR_Y0[0]) * cm;
+		   DIRC_DCBR_DY = DCBR_DY[0] * cm;
+		   DIRC_QZBL_DY = QZBL_DXDYDZ[1] * cm;
+		   DIRC_QZBL_DZ = QZBL_DXDYDZ[2] * cm;
+
+		   // array of bar y-positions for LUT from JGeometry		   
+		   double yDCML = 297.6; // DCML
+		   double dyDCML = 515.0; // DCML width
+		   double yDCBR = 193.3; // DCBR
+		   double dyQZBL = 35.15; // QZBL y height
+		   double dzQZBL = 17.25; // QZBL z depth
+
+		   G4cout<<"DCML_Y= "<<yDCML<<" "<<DIRC_DCML_Y<<G4endl;
+		   G4cout<<"DCML_DY= "<<dyDCML<<" "<<DIRC_DCML_DY<<G4endl;
+		   G4cout<<"DCBR_Y= "<<yDCBR<<" "<<DIRC_DCBR_Y<<G4endl;
+		   G4cout<<"QZBL_DY= "<<dyQZBL<<" "<<DIRC_QZBL_DY<<" "<<DIRC_DCBR_DY<<G4endl;
+		   G4cout<<"QZBL_DZ= "<<dzQZBL<<" "<<DIRC_QZBL_DZ<<G4endl;
+	   }
+   }
+
    std::map<int,std::string> infile;
    std::map<int,double> beampars;
    std::map<int,double> kinepars;
-   std::map<int, int> dirclutpars;
    
    // Three event source options are supported:
    // 1) external generator, hddm input stream source
@@ -112,7 +182,6 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
      fGunParticle.deltaR = 0;
      fGunParticle.deltaZ = 0;
      fGunParticle.mom = 3.18 * eV;
-
 
      fGunParticle.deltaMom = 0;
      fGunParticle.deltaTheta = 0;
@@ -407,21 +476,11 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
    // Special case of Cherenkov photon gun for DIRC Look Up Tables (LUT)
    if (user_opts->Find("DIRCLUT", dirclutpars)){
 
-     // initialize positions (should come from DGeometry, to be implemented by Richard)
-     double x = -1960.0 + 4900.2; // DCML + EPGL-to-wedge
-     double z = 5956.23 - 400.0 + 300.0 + 8.625; // DIRC+DRCC+DCML+DCBR+QZRL
-
-     // array of bar y-positions for LUT (should come from DGeometry, to be implemented by Richard)
+     // array of bar y-positions for LUT from JGeometry
      double y = 0.; // no shift
-     double yDCML = 297.6; // DCML
-     double dyDCML = 515.0; // DCML width
-     double yDCBR = 193.3; // DCBR
-     double dyQZBL = 35.15; // QZBL y height
-     double dzQZBL = 17.25; // QZBL z depth
-     double arr[] = {-1.*(yDCML+dyDCML)+yDCBR, -1.*yDCML+yDCBR, yDCML-yDCBR, yDCML+dyDCML-yDCBR};
-
-     //G4cout<<x<<" "<<y<<" "<<z<<" "<<G4endl;
-     //G4cout<<arr[0]<<" "<<arr[1]<<" "<<arr[2]<<" "<<arr[3]<<G4endl;
+     double x = DIRC_LUT_X;
+     double z = DIRC_LUT_Z;
+     double arr[] = {-1.*(DIRC_DCML_Y+DIRC_DCML_DY)+DIRC_DCBR_Y, -1.*DIRC_DCML_Y+DIRC_DCBR_Y, DIRC_DCML_Y-DIRC_DCBR_Y, DIRC_DCML_Y+DIRC_DCML_DY-DIRC_DCBR_Y};
 
      G4ThreeVector vec(0,0,1);
      double rand1 = G4UniformRand();
@@ -429,16 +488,16 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
      vec.setTheta(acos(rand1));
      vec.setPhi(2*M_PI*rand2);
      vec.rotateY(M_PI/2.);
-     y = arr[dirclutpars[1]/12]+(dirclutpars[1]%12)*dyQZBL;
+     y = arr[dirclutpars[1]/12]+(dirclutpars[1]%12)*DIRC_DCBR_DY;
      if(dirclutpars[1] < 24){
        vec.rotateY(M_PI);
        x = -1.*x;
-       y = arr[dirclutpars[1]/12]-(dirclutpars[1]%12)*dyQZBL;
+       y = arr[dirclutpars[1]/12]-(dirclutpars[1]%12)*DIRC_DCBR_DY;
      }
      
      // spread over end of bar in y and z
-     y += 35.0/2.0 - 35.0*G4UniformRand();
-     z += dzQZBL/2.0 - dzQZBL*G4UniformRand(); 
+     y += DIRC_QZBL_DY/2.0 - DIRC_QZBL_DY*G4UniformRand();
+     z += DIRC_QZBL_DZ/2.0 - DIRC_QZBL_DZ*G4UniformRand(); 
 
      thetap = vec.theta();
      phip = vec.phi();
