@@ -145,7 +145,7 @@ G4ClassificationOfNewTrack GlueXStackingAction::ClassifyNewTrack(
 
 	 // transtort efficiency
 	 if(G4UniformRand() > prob) return fKill;	 	
-      }else{return fKill;} // remove this condition!!!
+      }//else{return fKill;} // remove this condition!!!
    }// if particle is secondary
    
    return fUrgent;
