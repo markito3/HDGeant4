@@ -460,7 +460,7 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
      double y = 0.; // no shift
      double x = DIRC_LUT_X;
      double z = DIRC_LUT_Z;
-     double arr[] = {-1.*(DIRC_DCML_Y+DIRC_DCML_DY)+DIRC_DCBR_Y, -1.*DIRC_DCML_Y+DIRC_DCBR_Y, DIRC_DCML_Y-DIRC_DCBR_Y, DIRC_DCML_Y+DIRC_DCML_DY-DIRC_DCBR_Y};
+     double arr[] = {-1.*DIRC_DCML_Y+DIRC_DCBR_Y, -1.*(DIRC_DCML_Y+DIRC_DCML_DY)+DIRC_DCBR_Y, DIRC_DCML_Y-DIRC_DCBR_Y, DIRC_DCML_Y+DIRC_DCML_DY-DIRC_DCBR_Y};
 
      G4ThreeVector vec(0,0,1);
      double rand1 = G4UniformRand();
