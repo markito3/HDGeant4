@@ -204,15 +204,32 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
   if (volname == "PIXV"){
     if ((int)fHitsPmt.size() < MAX_HITS){
 
-      //fix propagation speed for op
+      // fix propagation speed for op
       double tracklen=track->GetTrackLength()/cm;
       double en=Ein/GeV;
       double refindex= 1.43603+0.0132404*en-0.00225287*en*en+0.000500109*en*en*en;  
       double time_fixed=tracklen/(29.9792458/refindex);
 
+      /*
+      // check propogation time
+      double l_QZBL = 9.1 + 0.96 + 122.5; // 2 * (4*122.5) // 2 * bar length + wedge + window
+      double l_EPOTEK = 0.005 + 8 * 0.005; // window+wedge glue + 6 * bar joing glue
+      double l_AIR = 2 * 0.01; // air gap to mirror
+      double l_H2O = tracklen - l_QZBL - l_EPOTEK - l_AIR;
+      
+      // hard coded propagation time for 3.5 eV OpticalPhoton
+      double angle = 45/180*3.14159;
+      double time_propagated = l_QZBL/(29.9792458/1.476)/cos(angle);
+      time_propagated += l_EPOTEK/(29.9792458/1.616)/cos(angle);
+      time_propagated += l_AIR/(29.9792458)/cos(angle);
+      time_propagated += l_H2O/(29.9792458/1.343);
+      G4cout<<"Propagated time = "<<time_propagated<<" and measured time = "<<t/ns<<G4endl;
+      */
+
       GlueXHitDIRCPmt pmthit;
       pmthit.E_GeV = Ein/GeV;
-      pmthit.t_ns = time_fixed; //t/ns;
+      pmthit.t_ns = t/ns;
+      pmthit.t_fixed_ns = time_fixed;
       pmthit.x_cm = x[0]/cm;
       pmthit.y_cm = x[1]/cm;
       pmthit.z_cm = x[2]/cm;
@@ -332,6 +349,7 @@ void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
     hddm_s::DircTruthPmtHitList mhit = dirc.addDircTruthPmtHits(1);
     mhit(0).setE(fHitsPmt[h].E_GeV);
     mhit(0).setT(fHitsPmt[h].t_ns);
+    mhit(0).setT_fixed(fHitsPmt[h].t_fixed_ns);
     mhit(0).setX(fHitsPmt[h].x_cm);
     mhit(0).setY(fHitsPmt[h].y_cm);
     mhit(0).setZ(fHitsPmt[h].z_cm);

@@ -22,6 +22,7 @@ void GlueXHitDIRCPmt::Print() const
 {
   G4cout << "   E = " << E_GeV << " GeV" << G4endl
 	 << "   t = " << t_ns << " ns" << G4endl
+	 << "   t_fixec = " << t_fixed_ns << " ns" << G4endl
 	 << "   x = " << x_cm << " cm" << G4endl
 	 << "   y = " << y_cm << " cm" << G4endl
 	 << "   z = " << z_cm << " cm" << G4endl

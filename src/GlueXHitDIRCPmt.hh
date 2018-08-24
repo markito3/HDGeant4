@@ -24,6 +24,7 @@ public:
 
   G4double E_GeV;      // photon energy [GeV]
   G4double t_ns;       // detection time [ns]
+  G4double t_fixed_ns; // fixed pathlength time [ns]
   G4double x_cm;       // x coordinate where hit was created
   G4double y_cm;       // y coordinate where hit was created
   G4double z_cm;       // z coordinate where hit was created
