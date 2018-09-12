@@ -52,7 +52,7 @@ DrcEvent* glx_event(0);
 const Int_t  glx_nrow(6),glx_ncol(18);
 const Int_t  glx_npmt(glx_nrow*glx_ncol);
 const Int_t  glx_npix(64);
-const Int_t  glx_npixtot(glx_npmt*glx_npix);
+const Int_t  glx_npixtot(glx_npmt*glx_npix*2); // 2 optical box
 
 TChain*  glx_ch(0);
 Int_t    glx_entries(0), glx_momentum(0),glx_pdg(0),glx_test1(0),glx_test2(0);
@@ -77,7 +77,7 @@ TString glx_drawDigi(TString digidata="", Int_t layoutId = 0, Double_t maxz = 0,
   if(!glx_cdigi) glx_cdigi = new TCanvas("glx_cdigi","glx_cdigi",800,350);
   glx_cdigi->cd();
   if(!glx_hpglobal){
-    glx_hpglobal = new TPad("P","T",0.005,0.04,0.95,0.96);
+    glx_hpglobal = new TPad("P","T",0.005,0.04,0.95,1.);
     glx_hpglobal->SetFillStyle(0);
     glx_hpglobal->Draw();
   }
@@ -91,11 +91,11 @@ TString glx_drawDigi(TString digidata="", Int_t layoutId = 0, Double_t maxz = 0,
     Int_t padi = 0;
     if(!glx_hpads[0]){
       for(int i=0; i<ncol; i++){
-	for(int j=0; j<nrow; j++){
-	  glx_hpads[padi] =  new TPad(Form("P%d",i*10+j),"T", i/(Double_t)ncol+bw, j/(Double_t)nrow+bh, (i+1)/(Double_t)ncol-bw, (1+j)/(Double_t)nrow-bh, 21);
+	for(int j=0; j<6; j++){
+	  glx_hpads[padi] =  new TPad(Form("P%d",i*10+j),"T", i/(Double_t)ncol+bw, j/(Double_t)nrow+bh+0.065, (i+1)/(Double_t)ncol-bw, (1+j)/(Double_t)nrow-bh+0.065, 21);
 	  glx_hpads[padi]->SetFillColor(kCyan-8);
 	  glx_hpads[padi]->SetMargin(0.04,0.04,0.04,0.04);
-	  glx_hpads[padi]->Draw(); 
+	  if((j+1)%6 != 0)  glx_hpads[padi]->Draw();
 	  padi++;
 	}
       }
@@ -168,9 +168,12 @@ TString glx_drawDigi(TString digidata="", Int_t layoutId = 0, Double_t maxz = 0,
   glx_cdigi->Modified();
   glx_cdigi->Update();
 
+  nnmax++; //!
+  
   glx_cdigi->cd();
   glx_hdigi[nnmax]->GetZaxis()->SetLabelSize(0.04);
   glx_hdigi[nnmax]->GetZaxis()->SetTickLength(0.01);
+  cout<<"+++nnmax = "<<nnmax<<endl;
   (new TPaletteAxis(0.955,0.1,0.97,0.90,((TH1 *)(glx_hdigi[nnmax])->Clone())))->Draw();
   
   glx_cdigi->Modified();
