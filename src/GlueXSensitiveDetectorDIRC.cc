@@ -132,8 +132,10 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
   int itrack = trackinfo->GetGlueXTrackID();
   G4String volname = touch->GetVolume()->GetName();  
   
-  // radiator volume
-  if (volname == "QZBL") {
+  // radiator volume: BNNM (NN = bar number 0-47 and M is sub-bar character A-D)
+  int ibar = 10*((int)volname(1,1)(0)-48)+(int)volname(2,1)(0)-48;   // this is nasty, but it works
+  if (volname(0,1)(0) == 'B' && ibar >= 0 && ibar < 48) { 
+
     if (trackinfo->GetGlueXHistory() == 0 && itrack > 0 && xin.dot(pin) > 0) {
       int pdgtype = track->GetDynamicParticle()->GetPDGcode();
       int g3type = GlueXPrimaryGeneratorAction::ConvertPdgToGeant3(pdgtype);
@@ -149,7 +151,7 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
       barhit.py_GeV = pin[1]/GeV;
       barhit.pz_GeV = pin[2]/GeV;
       barhit.pdg = g3type;
-      barhit.bar = (touch_hist->GetReplicaNumber(0)-1)/4; // each bar is glued from 4 pieces
+      barhit.bar = ibar; // from HDDS geometry
       barhit.track = itrack; // track id of the charged particle
       fHitsBar.push_back(barhit);      
     }

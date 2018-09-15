@@ -143,8 +143,9 @@ class GlueXPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
  private:
    static G4Mutex fMutex;
    static std::list<GlueXPrimaryGeneratorAction*> fInstance;
+   double DIRC_BAR_Y[48];
    double DIRC_LUT_X, DIRC_LUT_Z;
-   double DIRC_DCML_Y, DIRC_DCML_DY, DIRC_DCBR_Y, DIRC_DCBR_DY, DIRC_QZBL_DY, DIRC_QZBL_DZ;
+   double DIRC_QZBL_DY, DIRC_QZBL_DZ;
 };
 
 inline G4ParticleDefinition *GlueXPrimaryGeneratorAction::GetParticle(int PDGtype)
