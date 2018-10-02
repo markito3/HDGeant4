@@ -61,7 +61,7 @@ class GlueXSensitiveDetectorFDC : public G4VSensitiveDetector
    GlueXHitsMapFDCcathode* fCathodesMap;
    GlueXHitsMapFDCpoint* fPointsMap;
 
-   static std::map<G4LogicalVolume*, int> fVolumeTable;
+   std::map<G4LogicalVolume*, int> fVolumeTable;
 
    static const double ELECTRON_CHARGE;
    static double DRIFT_SPEED;
@@ -71,10 +71,10 @@ class GlueXSensitiveDetectorFDC : public G4VSensitiveDetector
    static int    WIRES_PER_PLANE;
    static double WIRE_SPACING;
    static double STRIP_SPACING;
-   static double U_OF_WIRE_ZERO;
+   static double U_OF_WIRE_ONE;
    static int    STRIPS_PER_PLANE;
    static double CATHODE_ROT_ANGLE;
-   static double U_OF_STRIP_ZERO;
+   static double U_OF_STRIP_ONE;
    static double STRIP_GAP;
    static double K2;
    static double STRIP_NODES;
