@@ -13,7 +13,7 @@ void drawMult(TString infile="data/sim_hprime2600_100k_tr_nodc.root"){
 
   //  gStyle->SetOptStat(0);
   TH2F *hPoint = new TH2F("hPoint",";x [cm]; y [cm]",200,-120,120,200,-120,120);
-  TH1F *hMult = new TH1F("hMult",";detected photons [#]; [#]",500,0,500);
+  TH1F *hMult = new TH1F("hMult",";detected photons [#]; [#]",200,0,200);
   TH1F *hEnergy = new TH1F("hEnergy",";photon energy [GeV]; [#]",100,0,10);
   
   const auto nmax(20);
