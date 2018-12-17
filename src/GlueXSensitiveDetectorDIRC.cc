@@ -161,8 +161,8 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
   // wedge and mirrors volumes
   if (volname == "FWM1" || volname == "FWM2" || volname == "FTMR" ||
       volname == "TSM1" || volname == "TSM2" || volname == "TSM3" ||
-      volname == "FSM1" || volname == "FSM2" || volname == "OWDG") {
-
+      volname == "FSM1" || volname == "FSM2" || volname == "OWDG" ||
+      (volname(0,1)(0) == 'A' && volname(0,1)(1) == 'G') ) {
 
     GlueXHitDIRCWob wobhit;
     wobhit.track = track->GetTrackID();
@@ -191,6 +191,9 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
       if(volname == "TSM1") mid=91;
       if(volname == "TSM2") mid=92;
       if(volname == "TSM3") mid=93;
+      if((volname(0,1)(0) == 'A' && volname(0,1)(1) == 'G')) { 
+	mid=100;
+      }
 
       if(mid!=-1){
 	G4double normalId = mid;// localNormal.x() + 10*localNormal.y() + 100*localNormal.z();
@@ -247,14 +250,20 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
 		      pmthit.key_bar = fHitsBar[i].bar;
 	      }
       }	
+      pmthit.track = track->GetParentID();
 
       int64_t pathId1 = 0;
       int64_t pathId2 = 0;
       int mid, refl=0;
+      pmthit.bbrefl = false;
       for (unsigned int i=0;i<fHitsWob.size();i++){
 	if(fHitsWob[i].track == track->GetTrackID()) {
-	  refl++;
 	  mid =fHitsWob[i].normalId;
+	  if(mid>=100) {
+	    pmthit.bbrefl = true;
+	    continue;
+	  }
+	  refl++;
 	  if(refl <= 18){
 	    if(mid<10) pathId1 = pathId1*10 + mid;
 	    else  pathId1 = pathId1*100 + mid;
@@ -359,6 +368,7 @@ void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
     mhit(0).setKey_bar(fHitsPmt[h].key_bar);
     mhit(0).setPath(fHitsPmt[h].path);
     mhit(0).setRefl(fHitsPmt[h].refl);
+    mhit(0).setBbrefl(fHitsPmt[h].bbrefl);
   }
 
   fHitsBar.clear();

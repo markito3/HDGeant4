@@ -383,7 +383,8 @@ void GlueXDetectorConstruction::ConstructSDandField()
       }
       else if (volname == "FWM1" || volname == "FWM2" || volname == "FTMR" ||
 	       volname == "TSM1" || volname == "TSM2" || volname == "TSM3" ||
-	       volname == "FSM1" || volname == "FSM2" || volname == "OWDG") {
+	       volname == "FSM1" || volname == "FSM2" || volname == "OWDG" ||
+	       (volname(0,1)(0) == 'A' && volname(0,1)(1) == 'G') ) {
 	if (dircHandler == 0) {
 	  dircHandler = new GlueXSensitiveDetectorDIRC("dirc");
 	  SDman->AddNewDetector(dircHandler);
