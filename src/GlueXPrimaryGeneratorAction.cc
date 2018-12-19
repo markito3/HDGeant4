@@ -134,7 +134,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 					      << std::setfill('0') << std::setw(2) << i << "']/@X_Y_Z"; 
 				   G4cout<<geomDCML01.str()<<G4endl;
 				   jgeom->Get(geomDCML01.str(), DCBR_XYZ);
-				   DIRC_BAR_Y[i] = (DCML01_XYZ[1] - DCBR_XYZ[1]) * cm;
+				   DIRC_BAR_Y[i] = (DCML01_XYZ[1] + DCBR_XYZ[1]) * cm;
 			   }
 			   else if(i<48) {
 				   std::stringstream geomDCML00;
@@ -142,7 +142,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 					      << std::setfill('0') << std::setw(2) << i << "']/@X_Y_Z"; 
 				   G4cout<<geomDCML00.str()<<G4endl;
 				   jgeom->Get(geomDCML00.str(), DCBR_XYZ);
-				   DIRC_BAR_Y[i] = (DCML00_XYZ[1] - DCBR_XYZ[1]) * cm;
+				   DIRC_BAR_Y[i] = (DCML00_XYZ[1] + DCBR_XYZ[1]) * cm;
 			   }
 		   }
 	   }
