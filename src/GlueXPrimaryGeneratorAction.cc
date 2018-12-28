@@ -98,17 +98,27 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 		   vector<double>DCML01_XYZ;
 		   vector<double>DCML10_XYZ;
 		   vector<double>DCML11_XYZ;
+		   vector<double>WNGL00_XYZ;
+                   vector<double>WNGL01_XYZ;
+                   vector<double>WNGL10_XYZ;
+                   vector<double>WNGL11_XYZ;
+		   vector<double>OWDG_XYZ;
 		   jgeom->Get("//section/composition/posXYZ[@volume='DIRC']/@X_Y_Z", DIRC);
 		   jgeom->Get("//composition[@name='DIRC']/posXYZ[@volume='DRCC']/@X_Y_Z", DRCC);
 		   jgeom->Get("//composition[@name='DRCC']/posXYZ[@volume='DCML00']/@X_Y_Z", DCML00_XYZ);
 		   jgeom->Get("//composition[@name='DRCC']/posXYZ[@volume='DCML01']/@X_Y_Z", DCML01_XYZ);
 		   jgeom->Get("//composition[@name='DRCC']/posXYZ[@volume='DCML10']/@X_Y_Z", DCML10_XYZ);
 		   jgeom->Get("//composition[@name='DRCC']/posXYZ[@volume='DCML11']/@X_Y_Z", DCML11_XYZ);
-		   
-		   DIRC_LUT_X = (DCML01_XYZ[0] + 4*122.505) * cm;
+		   jgeom->Get("//composition[@name='DCML00']/posXYZ[@volume='WNGL']/@X_Y_Z", WNGL00_XYZ);
+                   jgeom->Get("//composition[@name='DCML01']/posXYZ[@volume='WNGL']/@X_Y_Z", WNGL01_XYZ);
+                   jgeom->Get("//composition[@name='DCML10']/posXYZ[@volume='WNGL']/@X_Y_Z", WNGL10_XYZ);
+                   jgeom->Get("//composition[@name='DCML11']/posXYZ[@volume='WNGL']/@X_Y_Z", WNGL11_XYZ);
+		   jgeom->Get("//composition[@name='DCML11']/posXYZ[@volume='WNGL']/@X_Y_Z", WNGL11_XYZ);
+		   jgeom->Get("//trd[@name='OWDG']/@Xmp_Ymp_Z", OWDG_XYZ);
 		   DIRC_LUT_Z = (DIRC[2] + DRCC[2] + DCML01_XYZ[2] + 0.8625) * cm;
-		   DIRC_QZBL_DY = 3.5 * cm; 
-		   DIRC_QZBL_DZ = 1.725 * cm;
+		   DIRC_QZBL_DY = 3.5 * cm;   // nominal width to generate LUT
+		   DIRC_QZBL_DZ = 1.725 * cm; // nominal thickness to generate LUT
+		   DIRC_OWDG_DZ = OWDG_XYZ[4];
 
 		   // set array of bar positions
 		   for(int i=0; i<48; i++) {
@@ -119,31 +129,32 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 					      << std::setfill('0') << std::setw(2) << i << "']/@X_Y_Z"; 
 				   jgeom->Get(geomDCML10.str(), DCBR_XYZ);
 				   DIRC_BAR_Y[i] = (DCML10_XYZ[1] - DCBR_XYZ[1]) * cm;
+				   DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML10_XYZ[0] - WNGL10_XYZ[0] + DIRC_OWDG_DZ) * cm;
 			   }
 			   else if(i<24) {
 				   std::stringstream geomDCML11;
 				   geomDCML11 << "//composition[@name='DCML11']/posXYZ[@volume='DCBR" 
 					      << std::setfill('0') << std::setw(2) << i << "']/@X_Y_Z"; 
-				   G4cout<<geomDCML11.str()<<G4endl;
 				   jgeom->Get(geomDCML11.str(), DCBR_XYZ);
 				   DIRC_BAR_Y[i] = (DCML11_XYZ[1] - DCBR_XYZ[1]) * cm;
+				   DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML11_XYZ[0] - WNGL11_XYZ[0] + DIRC_OWDG_DZ) * cm;
 			   }
 			   else if(i<36) {
 				   std::stringstream geomDCML01;
 				   geomDCML01 << "//composition[@name='DCML01']/posXYZ[@volume='DCBR" 
 					      << std::setfill('0') << std::setw(2) << i << "']/@X_Y_Z"; 
-				   G4cout<<geomDCML01.str()<<G4endl;
 				   jgeom->Get(geomDCML01.str(), DCBR_XYZ);
 				   DIRC_BAR_Y[i] = (DCML01_XYZ[1] + DCBR_XYZ[1]) * cm;
+				   DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML01_XYZ[0] + WNGL01_XYZ[0] - DIRC_OWDG_DZ) * cm;
 			   }
 			   else if(i<48) {
 				   std::stringstream geomDCML00;
 				   geomDCML00 << "//composition[@name='DCML00']/posXYZ[@volume='DCBR" 
 					      << std::setfill('0') << std::setw(2) << i << "']/@X_Y_Z"; 
-				   G4cout<<geomDCML00.str()<<G4endl;
 				   jgeom->Get(geomDCML00.str(), DCBR_XYZ);
 				   DIRC_BAR_Y[i] = (DCML00_XYZ[1] + DCBR_XYZ[1]) * cm;
-			   }
+				   DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML00_XYZ[0] + WNGL00_XYZ[0] - DIRC_OWDG_DZ) * cm;
+			   }			   
 		   }
 	   }
    }
@@ -482,7 +493,7 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
 
      // array of bar y-positions for LUT from JGeometry
      double y = 0.; // no shift
-     double x = DIRC_LUT_X;
+     double x = DIRC_LUT_X[dirclutpars[1]];
      double z = DIRC_LUT_Z;
 
      G4ThreeVector vec(0,0,1);
@@ -494,8 +505,6 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
      y = DIRC_BAR_Y[dirclutpars[1]];
      if(dirclutpars[1] < 24){
        vec.rotateY(M_PI);
-       x = -1.*x;
-       y = DIRC_BAR_Y[dirclutpars[1]]; 
      }
      
      // spread over end of bar in y and z
