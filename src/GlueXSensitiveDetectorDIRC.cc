@@ -360,15 +360,17 @@ void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
     hddm_s::DircTruthPmtHitList mhit = dirc.addDircTruthPmtHits(1);
     mhit(0).setE(fHitsPmt[h].E_GeV);
     mhit(0).setT(fHitsPmt[h].t_ns);
-    mhit(0).setT_fixed(fHitsPmt[h].t_fixed_ns);
     mhit(0).setX(fHitsPmt[h].x_cm);
     mhit(0).setY(fHitsPmt[h].y_cm);
     mhit(0).setZ(fHitsPmt[h].z_cm);
     mhit(0).setCh(fHitsPmt[h].ch);
     mhit(0).setKey_bar(fHitsPmt[h].key_bar);
+#if DIRCTRUTH
+    mhit(0).setT_fixed(fHitsPmt[h].t_fixed_ns);
     mhit(0).setPath(fHitsPmt[h].path);
     mhit(0).setRefl(fHitsPmt[h].refl);
     mhit(0).setBbrefl(fHitsPmt[h].bbrefl);
+#endif
   }
 
   fHitsBar.clear();
