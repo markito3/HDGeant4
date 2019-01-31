@@ -163,8 +163,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
    std::map<int,std::string> infile;
    std::map<int,double> beampars;
    std::map<int,double> kinepars;
-   std::map<int, int> dirclutpars;
-   
+
    // Three event source options are supported:
    // 1) external generator, hddm input stream source
    // 2) internal coherent bremsstrahlung beam generator
@@ -226,12 +225,12 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
          fGunParticle.partDef = fParticleTable->FindParticle("opticalphoton");
       }            
       else {
-	if (kinepars[1] > 100)
-	  fGunParticle.geantType = kinepars[1] - 100;
-	else
-	  fGunParticle.geantType = kinepars[1];
-          fGunParticle.pdgType = ConvertGeant3ToPdg(fGunParticle.geantType);
-          fGunParticle.partDef = fParticleTable->FindParticle(fGunParticle.pdgType);
+         if (kinepars[1] > 100)
+            fGunParticle.geantType = kinepars[1] - 100;
+         else
+            fGunParticle.geantType = kinepars[1];
+         fGunParticle.pdgType = ConvertGeant3ToPdg(fGunParticle.geantType);
+         fGunParticle.partDef = fParticleTable->FindParticle(fGunParticle.pdgType);
       }
       if (fGunParticle.partDef == 0) {   
          G4cerr << "GlueXPrimaryGeneratorAction constructor error - "
@@ -271,7 +270,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 
       fGunParticle.mom = kinepars[2] * GeV;
       if (kinepars[1] > 100) {
-	 fGunParticle.theta = kinepars[3] * degree;
+         fGunParticle.theta = kinepars[3] * degree;
          fGunParticle.phi = kinepars[4] * degree;
          fGunParticle.deltaMom = kinepars[5] * GeV;
          fGunParticle.deltaTheta = kinepars[6] * degree;
@@ -521,7 +520,6 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
    G4ThreeVector mom(p * sin(thetap) * cos(phip),
                      p * sin(thetap) * sin(phip),
                      p * cos(thetap));
-
    fParticleGun->SetParticleMomentum(mom);
    fParticleGun->SetParticleTime(0);
 

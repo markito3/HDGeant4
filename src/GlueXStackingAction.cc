@@ -97,8 +97,8 @@ G4ClassificationOfNewTrack GlueXStackingAction::ClassifyNewTrack(
    //                > 0 : secondary particle
    //                < 0 : postponed from the previous event
 
-  if (nosecondaries && aTrack->GetParentID() != 0)
-    return fKill;
+   if (nosecondaries && aTrack->GetParentID() != 0)
+      return fKill;
 
    // apply detection efficiency for the DIRC at production stage:
    G4String ParticleName = aTrack->GetDynamicParticle()->GetParticleDefinition()->GetParticleName();

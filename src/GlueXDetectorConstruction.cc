@@ -58,7 +58,6 @@ using namespace xercesc;
 
 #include "XString.hpp"
 #include "XParsers.hpp"
-#include "G4GDMLParser.hh"
 
 #include <string.h>
 #include <libgen.h>
@@ -249,12 +248,7 @@ G4VPhysicalVolume* GlueXDetectorConstruction::Construct()
    G4LogicalVolume *worldvol = fHddsBuilder.getWorldVolume();
    G4cout << "Root geometry volume " << worldvol->GetName();
    worldvol->SetName("World");
-
    G4cout << " configured as " << worldvol->GetName() << G4endl;
-
-   // G4GDMLParser parser;
-   // parser.Write("geom.gdml", worldvol);
-   
    worldvol->SetVisAttributes(new G4VisAttributes(false));
    return new G4PVPlacement(0, G4ThreeVector(), worldvol, "World", 0, 0, 0);
 }
@@ -398,11 +392,11 @@ void GlueXDetectorConstruction::ConstructSDandField()
          iter->second->SetSensitiveDetector(dircHandler);
       }
       else if (volname == "CERW" || volname == "CPPC") {
-	if (cereHandler == 0) {
-	  cereHandler = new GlueXSensitiveDetectorCERE("cere");
-	  SDman->AddNewDetector(cereHandler);
-	}
-	iter->second->SetSensitiveDetector(cereHandler);
+         if (cereHandler == 0) {
+            cereHandler = new GlueXSensitiveDetectorCERE("cere");
+            SDman->AddNewDetector(cereHandler);
+         }
+         iter->second->SetSensitiveDetector(cereHandler);
       }
       else if (volname == "CPPG") {
          if (fmwpcHandler == 0) {
@@ -603,7 +597,6 @@ GlueXParallelWorld::~GlueXParallelWorld() { }
 
 void GlueXParallelWorld::Construct()
 {
-  
    G4VPhysicalVolume* ghostWorld = GetWorld();
    G4LogicalVolume* worldLogical = ghostWorld->GetLogicalVolume();
    for (int child = fTopVolume->GetNoDaughters() - 1; child >= 0; --child) {

@@ -242,12 +242,6 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
       G4cout<<"Propagated time = "<<time_propagated<<" and measured time = "<<t/ns<<G4endl;
 #endif
 
-      //fix propagation speed for op
-      double tracklen=track->GetTrackLength()/cm;
-      double en=Ein/GeV;
-      double refindex= 1.43603+0.0132404*en-0.00225287*en*en+0.000500109*en*en*en;  
-      double time_fixed=tracklen/(29.9792458/refindex);
-
       GlueXHitDIRCPmt pmthit;
       pmthit.E_GeV = Ein/GeV;
       pmthit.t_ns = t/ns;
@@ -326,7 +320,7 @@ void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
     return;
   }
   
-  if (verboseLevel > 1) {
+  if (verboseLevel > 1) { 
     G4cout << G4endl
        << "--------> Hits Collection: in this event there are "
        << fHitsBar.size() << " bar hits:"
@@ -343,6 +337,7 @@ void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
   }
 
   // pack hits into ouptut hddm record
+ 
   G4EventManager* mgr = G4EventManager::GetEventManager();
   G4VUserEventInformation* info = mgr->GetUserInformation();
   hddm_s::HDDM *record = ((GlueXUserEventInformation*)info)->getOutputRecord();
@@ -429,7 +424,6 @@ double GlueXSensitiveDetectorDIRC::GetDetectionEfficiency(double energy)
    if (fDetEff == 0)
       InitializeDetEff();
    double wavelength = CLHEP::hbarc * CLHEP::twopi / energy;
-				    
    return fDetEff->Eval(wavelength / nm);
 }
 
