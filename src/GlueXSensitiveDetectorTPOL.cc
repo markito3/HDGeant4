@@ -34,8 +34,6 @@ double GlueXSensitiveDetectorTPOL::THRESH_MEV = 0.050;
 int GlueXSensitiveDetectorTPOL::instanceCount = 0;
 G4Mutex GlueXSensitiveDetectorTPOL::fMutex = G4MUTEX_INITIALIZER;
 
-std::map<G4LogicalVolume*, int> GlueXSensitiveDetectorTPOL::fVolumeTable;
-
 GlueXSensitiveDetectorTPOL::GlueXSensitiveDetectorTPOL(const G4String& name)
  : G4VSensitiveDetector(name),
    fHitsMap(0), fPointsMap(0)
@@ -72,12 +70,14 @@ GlueXSensitiveDetectorTPOL::GlueXSensitiveDetectorTPOL(
  : G4VSensitiveDetector(src),
    fHitsMap(src.fHitsMap), fPointsMap(src.fPointsMap)
 {
+   G4AutoLock barrier(&fMutex);
    ++instanceCount;
 }
 
 GlueXSensitiveDetectorTPOL &GlueXSensitiveDetectorTPOL::operator=(const
                                          GlueXSensitiveDetectorTPOL &src)
 {
+   G4AutoLock barrier(&fMutex);
    *(G4VSensitiveDetector*)this = src;
    fHitsMap = src.fHitsMap;
    fPointsMap = src.fPointsMap;
@@ -86,12 +86,13 @@ GlueXSensitiveDetectorTPOL &GlueXSensitiveDetectorTPOL::operator=(const
 
 GlueXSensitiveDetectorTPOL::~GlueXSensitiveDetectorTPOL() 
 {
+   G4AutoLock barrier(&fMutex);
    --instanceCount;
 }
 
 void GlueXSensitiveDetectorTPOL::Initialize(G4HCofThisEvent* hce)
 {
-   fHitsMap = new 
+   fHitsMap = new
               GlueXHitsMapTPOLwedge(SensitiveDetectorName, collectionName[0]);
    fPointsMap = new
               GlueXHitsMapTPOLpoint(SensitiveDetectorName, collectionName[1]);
@@ -101,7 +102,7 @@ void GlueXSensitiveDetectorTPOL::Initialize(G4HCofThisEvent* hce)
 }
 
 G4bool GlueXSensitiveDetectorTPOL::ProcessHits(G4Step* step, 
-                                               G4TouchableHistory* unused)
+                                               G4TouchableHistory* ROhist)
 {
    double dEsum = step->GetTotalEnergyDeposit();
    if (dEsum == 0)
@@ -154,20 +155,20 @@ G4bool GlueXSensitiveDetectorTPOL::ProcessHits(G4Step* step,
           (fabs(lastPoint->r_cm - x.perp()/cm) > 0.1 &&
            fabs(lastPoint->phi_rad - x.phi()) > 0.1) )
       {
-         GlueXHitTPOLpoint* newPoint = new GlueXHitTPOLpoint();
+         GlueXHitTPOLpoint newPoint;
+         newPoint.ptype_G3 = g3type;
+         newPoint.track_ = trackID;
+         newPoint.trackID_ = itrack;
+         newPoint.primary_ = (track->GetParentID() == 0);
+         newPoint.phi_rad = x.phi();
+         newPoint.r_cm = x.perp()/cm;
+         newPoint.t_ns = t/ns;
+         newPoint.px_GeV = pin[0]/GeV;
+         newPoint.py_GeV = pin[1]/GeV;
+         newPoint.pz_GeV = pin[2]/GeV;
+         newPoint.E_GeV = Ein/GeV;
+         newPoint.dEdx_GeV_cm = dEdx/(GeV/cm);
          fPointsMap->add(key, newPoint);
-         newPoint->ptype_G3 = g3type;
-         newPoint->track_ = trackID;
-         newPoint->trackID_ = itrack;
-         newPoint->primary_ = (track->GetParentID() == 0);
-         newPoint->phi_rad = x.phi();
-         newPoint->r_cm = x.perp()/cm;
-         newPoint->t_ns = t/ns;
-         newPoint->px_GeV = pin[0]/GeV;
-         newPoint->py_GeV = pin[1]/GeV;
-         newPoint->pz_GeV = pin[2]/GeV;
-         newPoint->E_GeV = Ein/GeV;
-         newPoint->dEdx_GeV_cm = dEdx/(GeV/cm);
       }
    }
 
@@ -177,8 +178,9 @@ G4bool GlueXSensitiveDetectorTPOL::ProcessHits(G4Step* step,
       int key = GlueXHitTPOLwedge::GetKey(sector, ring);
       GlueXHitTPOLwedge *wedge = (*fHitsMap)[key];
       if (wedge == 0) {
-         wedge = new GlueXHitTPOLwedge(sector, ring);
-         fHitsMap->add(key, wedge);
+         GlueXHitTPOLwedge newwedge(sector, ring);
+         fHitsMap->add(key, newwedge);
+         wedge = (*fHitsMap)[key];
       }
 
       // Add the hit to the hits vector, maintaining strict time ordering
@@ -294,7 +296,7 @@ void GlueXSensitiveDetectorTPOL::EndOfEvent(G4HCofThisEvent*)
       }
    }
 
-   // Collect and output the wedgeTruthPoints
+   // Collect and output the tpolTruthPoints
    for (piter = points->begin(); piter != points->end(); ++piter) {
       hddm_s::TpolTruthPointList point = polarimeter.addTpolTruthPoints(1);
       point(0).setE(piter->second->E_GeV);
@@ -330,10 +332,9 @@ int GlueXSensitiveDetectorTPOL::GetIdent(std::string div,
       }
       identifiers = &Refsys::fIdentifierTable[volId];
       if ((iter = identifiers->find(div)) != identifiers->end()) {
-         if (dynamic_cast<G4PVPlacement*>(pvol))
-            return iter->second[pvol->GetCopyNo() - 1];
-         else
-            return iter->second[pvol->GetCopyNo()];
+         int copyNum = touch->GetCopyNumber(depth);
+         copyNum += (dynamic_cast<G4PVPlacement*>(pvol))? -1 : 0;
+         return iter->second[copyNum];
       }
    }
    return -1;

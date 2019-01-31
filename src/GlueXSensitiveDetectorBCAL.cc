@@ -44,8 +44,6 @@ double GlueXSensitiveDetectorBCAL::THRESH_MEV = 1.;
 int GlueXSensitiveDetectorBCAL::instanceCount = 0;
 G4Mutex GlueXSensitiveDetectorBCAL::fMutex = G4MUTEX_INITIALIZER;
 
-std::map<G4LogicalVolume*, int> GlueXSensitiveDetectorBCAL::fVolumeTable;
-
 GlueXSensitiveDetectorBCAL::GlueXSensitiveDetectorBCAL(const G4String& name)
  : G4VSensitiveDetector(name),
    fCellsMap(0), fPointsMap(0)
@@ -93,12 +91,14 @@ GlueXSensitiveDetectorBCAL::GlueXSensitiveDetectorBCAL(
  : G4VSensitiveDetector(src),
    fCellsMap(src.fCellsMap), fPointsMap(src.fPointsMap)
 {
+   G4AutoLock barrier(&fMutex);
    ++instanceCount;
 }
 
 GlueXSensitiveDetectorBCAL &GlueXSensitiveDetectorBCAL::operator=(const
                                          GlueXSensitiveDetectorBCAL &src)
 {
+   G4AutoLock barrier(&fMutex);
    *(G4VSensitiveDetector*)this = src;
    fCellsMap = src.fCellsMap;
    fPointsMap = src.fPointsMap;
@@ -107,12 +107,13 @@ GlueXSensitiveDetectorBCAL &GlueXSensitiveDetectorBCAL::operator=(const
 
 GlueXSensitiveDetectorBCAL::~GlueXSensitiveDetectorBCAL() 
 {
+   G4AutoLock barrier(&fMutex);
    --instanceCount;
 }
 
 void GlueXSensitiveDetectorBCAL::Initialize(G4HCofThisEvent* hce)
 {
-   fCellsMap = new 
+   fCellsMap = new
               GlueXHitsMapBCALcell(SensitiveDetectorName, collectionName[0]);
    fPointsMap = new
               GlueXHitsMapBCALpoint(SensitiveDetectorName, collectionName[1]);
@@ -122,7 +123,7 @@ void GlueXSensitiveDetectorBCAL::Initialize(G4HCofThisEvent* hce)
 }
 
 G4bool GlueXSensitiveDetectorBCAL::ProcessHits(G4Step* step, 
-                                              G4TouchableHistory* unused)
+                                               G4TouchableHistory* RHhist)
 {
    double dEsum = step->GetTotalEnergyDeposit();
    const G4ThreeVector &pin = step->GetPreStepPoint()->GetMomentum();
@@ -163,21 +164,21 @@ G4bool GlueXSensitiveDetectorBCAL::ProcessHits(G4Step* step,
           xin[0] * pin[0] + xin[1] * pin[1] > 0 &&
           Ein > THRESH_MEV*MeV)
       {
-         GlueXHitBCALpoint* newPoint = new GlueXHitBCALpoint();
+         GlueXHitBCALpoint newPoint;
+         newPoint.ptype_G3 = g3type;
+         newPoint.track_ = trackID;
+         newPoint.trackID_ = itrack;
+         newPoint.primary_ = (track->GetParentID() == 0);
+         newPoint.t_ns = t/ns;
+         newPoint.z_cm = xin[2]/cm;
+         newPoint.r_cm = xin.perp()/cm;
+         newPoint.phi_rad = xin.phi();
+         newPoint.px_GeV = pin[0]/GeV;
+         newPoint.py_GeV = pin[1]/GeV;
+         newPoint.pz_GeV = pin[2]/GeV;
+         newPoint.E_GeV = Ein/GeV;
          G4int key = fPointsMap->entries();
          fPointsMap->add(key, newPoint);
-         newPoint->ptype_G3 = g3type;
-         newPoint->track_ = trackID;
-         newPoint->trackID_ = itrack;
-         newPoint->primary_ = (track->GetParentID() == 0);
-         newPoint->t_ns = t/ns;
-         newPoint->z_cm = xin[2]/cm;
-         newPoint->r_cm = xin.perp()/cm;
-         newPoint->phi_rad = xin.phi();
-         newPoint->px_GeV = pin[0]/GeV;
-         newPoint->py_GeV = pin[1]/GeV;
-         newPoint->pz_GeV = pin[2]/GeV;
-         newPoint->E_GeV = Ein/GeV;
          trackinfo->SetGlueXHistory(1);
  
          // The original HDGeant hits code for the BCal had a heavy-weight
@@ -228,8 +229,9 @@ G4bool GlueXSensitiveDetectorBCAL::ProcessHits(G4Step* step,
       int key = GlueXHitBCALcell::GetKey(module, layer, sector);
       GlueXHitBCALcell *cell = (*fCellsMap)[key];
       if (cell == 0) {
-         cell = new GlueXHitBCALcell(module, layer, sector);
-         fCellsMap->add(key, cell);
+         GlueXHitBCALcell newcell(module, layer, sector);
+         fCellsMap->add(key, newcell);
+         cell = (*fCellsMap)[key];
       }
 
       // Add the hit to the hits vector, maintaining strict time ordering
@@ -362,7 +364,7 @@ void GlueXSensitiveDetectorBCAL::EndOfEvent(G4HCofThisEvent*)
 }
 
 int GlueXSensitiveDetectorBCAL::GetIdent(std::string div, 
-                                        const G4VTouchable *touch)
+                                         const G4VTouchable *touch)
 {
    const HddsG4Builder* bldr = GlueXDetectorConstruction::GetBuilder();
    std::map<std::string, std::vector<int> >::const_iterator iter;
@@ -378,10 +380,9 @@ int GlueXSensitiveDetectorBCAL::GetIdent(std::string div,
       }
       identifiers = &Refsys::fIdentifierTable[volId];
       if ((iter = identifiers->find(div)) != identifiers->end()) {
-         if (dynamic_cast<G4PVPlacement*>(pvol))
-            return iter->second[pvol->GetCopyNo() - 1];
-         else
-            return iter->second[pvol->GetCopyNo()];
+         int copyNum = touch->GetCopyNumber(depth);
+         copyNum += (dynamic_cast<G4PVPlacement*>(pvol))? -1 : 0;
+         return iter->second[copyNum];
       }
    }
    return -1;

@@ -4,6 +4,7 @@ c OUTFILE 'sim_hprime2600_100k_notr_nodc.hddm'
 OUTFILE 'out.hddm'
 
 c TRIG 5
+cGEOMOPT 0
 
 c generation of the DIRC lookup table (LUT)
 c 0 - LUT for all bars simultaneously

@@ -23,7 +23,7 @@ endif
 
 CPPFLAGS += -I$(HDDS_HOME) -I./src -I./src/G4fixes
 CPPFLAGS += -I./src/G4debug
-CPPFLAGS += -I$(HALLD_HOME)/$(BMS_OSNAME)/include
+CPPFLAGS += -I$(HALLD_RECON_HOME)/$(BMS_OSNAME)/include
 CPPFLAGS += -I$(JANA_HOME)/include
 CPPFLAGS += -I$(shell root-config --incdir)
 #CPPFLAGS += -I/usr/include/Qt
@@ -46,6 +46,10 @@ CPPFLAGS += -DG4MULTITHREADED
 #CPPFLAGS += -DDEBUG_PLACEMENT
 #CPPFLAGS += -DDEBUG_SECTIONPLANE
 #CPPFLAGS += -DDEBUG_SECTIONPLANE_ZAVE
+CPPFLAGS += -DG4VERSION_10_04_OR_LATER=1
+ifneq (, $(wildcard $(HALLD_RECON_HOME)/src/libraries/DIRC/DDIRCPmtHit.*))
+	CPPFLAGS += -DDIRCTRUTHEXTRA
+endif
 
 # If you want to build against Geant4.10.03 or greater, you will need this line uncommented
 #CPPFLAGS += -DG4VUSERPHYSICSLIST_HAS_GETPARTICLEITERATOR
@@ -62,12 +66,12 @@ HDDS_sources := $(HDDS_HOME)/XString.cpp $(HDDS_HOME)/XParsers.cpp $(HDDS_HOME)/
 
 ROOTLIBS = $(shell root-config --libs) -lGeom -lTMVA -lTreePlayer
 
-DANALIBS = -L$(HALLD_HOME)/$(BMS_OSNAME)/lib -lHDGEOMETRY -lDANA \
+DANALIBS = -L$(HALLD_RECON_HOME)/$(BMS_OSNAME)/lib -lHDGEOMETRY -lDANA \
            -lANALYSIS -lBCAL -lCCAL -lCDC -lCERE -lDIRC -lFCAL \
            -lFDC -lFMWPC -lHDDM -lPAIR_SPECTROMETER -lPID -lRF \
            -lSTART_COUNTER -lTAGGER -lTOF -lTPOL -lTRACKING \
            -lTRIGGER -lDAQ -lTTAB -lEVENTSTORE -lKINFITTER -lTAC \
-           -L$(SQLITECPP_HOME)/lib -lSQLiteCpp -lsqlite3 \
+           -L$(SQLITECPP_HOME)/lib -lSQLiteCpp -L$(SQLITE_HOME)/lib -Wl,-rpath=$(SQLITE_HOME)/lib -lsqlite3 \
            -lxstream -lbz2 -lz \
            -L/usr/lib64/mysql -lmysqlclient\
            -L$(JANA_HOME)/lib -lJANA \
@@ -75,7 +79,7 @@ DANALIBS = -L$(HALLD_HOME)/$(BMS_OSNAME)/lib -lHDGEOMETRY -lDANA \
            -L$(CCDB_HOME)/lib -lccdb \
            -L$(EVIOROOT)/lib -levioxx -levio \
            $(ROOTLIBS) \
-           -lpthread -ldl
+           -lpthread -ldl -lgfortran
 
 ifdef ETROOT
 DANALIBS += -L$(ETROOT)/lib -let -let_remote
@@ -89,11 +93,12 @@ INTYLIBS += -L${XERCESCROOT}/lib -lxerces-c
 INTYLIBS += -L$(G4TMPDIR) -lhdds
 INTYLIBS += -lboost_python -L$(shell python-config --prefix)/lib $(shell python-config --ldflags)
 INTYLIBS += -L$(G4ROOT)/lib64 $(patsubst $(G4ROOT)/lib64/lib%.so, -l%, $(G4shared_libs))
+INTYLIBS += -L/usr/lib64
 
 EXTRALIBS += -lG4fixes
 
 .PHONY: all
-all: hdds cobrems g4fixes sharedlib exe lib bin g4py
+all: hdds cobrems G4fixes_symlink g4fixes sharedlib exe lib bin g4py
 
 include $(G4INSTALL)/config/binmake.gmk
 
@@ -105,6 +110,12 @@ CXXFLAGS = -O4 -fPIC -W -Wall -pedantic -Wno-non-virtual-dtor -Wno-long-long
 
 HDDSDIR := $(G4TMPDIR)/hdds
 G4FIXESDIR := $(G4TMPDIR)/G4fixes
+G4fixes_symlink:
+	@if [ ! -L src/G4fixes ]; then\
+	    echo "ERROR - symbolic link G4fixes does not exist in directory src,"\
+	    "cannot continue!";\
+	    false;\
+	fi
 
 $(G4TMPDIR)/libcobrems.so: $(Cobrems_sources)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -Wl,--export-dynamic -Wl,-soname,libcobrems.so \
@@ -179,7 +190,10 @@ $(G4LIBDIR)/../../../g4py/G4fixes/libG4fixes.so: $(G4LIBDIR)/libG4fixes.so
 	@rm -f $@
 	@cd g4py/G4fixes && ln -s ../../tmp/*/hdgeant4/libG4fixes.so .
 
-utils: $(G4BINDIR)/beamtree
+utils: $(G4BINDIR)/beamtree $(G4BINDIR)/genBH
 
 $(G4BINDIR)/beamtree: src/utils/beamtree.cc
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ -L$(G4LIBDIR) -lhdgeant4 $(ROOTLIBS) -Wl,-rpath=$(G4LIBDIR)
+
+$(G4BINDIR)/genBH: src/utils/genBH.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ -L$(G4LIBDIR) -lhdgeant4 $(ROOTLIBS) -Wl,-rpath=$(G4LIBDIR)

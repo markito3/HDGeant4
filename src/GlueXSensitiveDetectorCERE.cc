@@ -35,8 +35,6 @@ double GlueXSensitiveDetectorCERE::THRESH_PE = 2.;
 int GlueXSensitiveDetectorCERE::instanceCount = 0;
 G4Mutex GlueXSensitiveDetectorCERE::fMutex = G4MUTEX_INITIALIZER;
 
-std::map<G4LogicalVolume*, int> GlueXSensitiveDetectorCERE::fVolumeTable;
-
 GlueXSensitiveDetectorCERE::GlueXSensitiveDetectorCERE(const G4String& name)
  : G4VSensitiveDetector(name),
    fTubeHitsMap(0), fPointsMap(0)
@@ -73,12 +71,14 @@ GlueXSensitiveDetectorCERE::GlueXSensitiveDetectorCERE(
  : G4VSensitiveDetector(src),
    fTubeHitsMap(src.fTubeHitsMap), fPointsMap(src.fPointsMap)
 {
+   G4AutoLock tuberier(&fMutex);
    ++instanceCount;
 }
 
 GlueXSensitiveDetectorCERE &GlueXSensitiveDetectorCERE::operator=(const
                                          GlueXSensitiveDetectorCERE &src)
 {
+   G4AutoLock tuberier(&fMutex);
    *(G4VSensitiveDetector*)this = src;
    fTubeHitsMap = src.fTubeHitsMap;
    fPointsMap = src.fPointsMap;
@@ -87,12 +87,13 @@ GlueXSensitiveDetectorCERE &GlueXSensitiveDetectorCERE::operator=(const
 
 GlueXSensitiveDetectorCERE::~GlueXSensitiveDetectorCERE() 
 {
+   G4AutoLock tuberier(&fMutex);
    --instanceCount;
 }
 
 void GlueXSensitiveDetectorCERE::Initialize(G4HCofThisEvent* hce)
 {
-   fTubeHitsMap = new 
+   fTubeHitsMap = new
               GlueXHitsMapCEREtube(SensitiveDetectorName, collectionName[0]);
    fPointsMap = new
               GlueXHitsMapCEREpoint(SensitiveDetectorName, collectionName[1]);
@@ -102,7 +103,7 @@ void GlueXSensitiveDetectorCERE::Initialize(G4HCofThisEvent* hce)
 }
 
 G4bool GlueXSensitiveDetectorCERE::ProcessHits(G4Step* step, 
-                                              G4TouchableHistory* unused)
+                                               G4TouchableHistory* ROhist)
 {
    double dEsum = step->GetTotalEnergyDeposit();
    if (dEsum == 0)
@@ -152,20 +153,20 @@ G4bool GlueXSensitiveDetectorCERE::ProcessHits(G4Step* step,
              fabs(lastPoint->y_cm - x[1]/cm) > 2. ||
              fabs(lastPoint->z_cm - x[2]/cm) > 2.)
          {
-            GlueXHitCEREpoint* newPoint = new GlueXHitCEREpoint();
+            GlueXHitCEREpoint newPoint;
+            newPoint.ptype_G3 = g3type;
+            newPoint.track_ = trackID;
+            newPoint.trackID_ = itrack;
+            newPoint.primary_ = (track->GetParentID() == 0);
+            newPoint.t_ns = t/ns;
+            newPoint.x_cm = x[0]/cm;
+            newPoint.y_cm = x[1]/cm;
+            newPoint.z_cm = x[2]/cm;
+            newPoint.px_GeV = pin[0]/GeV;
+            newPoint.py_GeV = pin[1]/GeV;
+            newPoint.pz_GeV = pin[2]/GeV;
+            newPoint.E_GeV = Ein/GeV;
             fPointsMap->add(key, newPoint);
-            newPoint->ptype_G3 = g3type;
-            newPoint->track_ = trackID;
-            newPoint->trackID_ = itrack;
-            newPoint->primary_ = (track->GetParentID() == 0);
-            newPoint->t_ns = t/ns;
-            newPoint->x_cm = x[0]/cm;
-            newPoint->y_cm = x[1]/cm;
-            newPoint->z_cm = x[2]/cm;
-            newPoint->px_GeV = pin[0]/GeV;
-            newPoint->py_GeV = pin[1]/GeV;
-            newPoint->pz_GeV = pin[2]/GeV;
-            newPoint->E_GeV = Ein/GeV;
          }
       }
       // This sensitive detector is unique in that different volumes are used
@@ -181,8 +182,9 @@ G4bool GlueXSensitiveDetectorCERE::ProcessHits(G4Step* step,
       int key = GlueXHitCEREtube::GetKey(sector);
       GlueXHitCEREtube *counter = (*fTubeHitsMap)[key];
       if (counter == 0) {
-         counter = new GlueXHitCEREtube(sector);
-         fTubeHitsMap->add(key, counter);
+         GlueXHitCEREtube newcounter(sector);
+         fTubeHitsMap->add(key, newcounter);
+         counter = (*fTubeHitsMap)[key];
       }
 
       // Add the hit to the hits vector, maintaining strict time ordering
@@ -308,7 +310,7 @@ void GlueXSensitiveDetectorCERE::EndOfEvent(G4HCofThisEvent*)
 }
 
 int GlueXSensitiveDetectorCERE::GetIdent(std::string div, 
-                                        const G4VTouchable *touch)
+                                         const G4VTouchable *touch)
 {
    const HddsG4Builder* bldr = GlueXDetectorConstruction::GetBuilder();
    std::map<std::string, std::vector<int> >::const_iterator iter;
@@ -324,10 +326,9 @@ int GlueXSensitiveDetectorCERE::GetIdent(std::string div,
       }
       identifiers = &Refsys::fIdentifierTable[volId];
       if ((iter = identifiers->find(div)) != identifiers->end()) {
-         if (dynamic_cast<G4PVPlacement*>(pvol))
-            return iter->second[pvol->GetCopyNo() - 1];
-         else
-            return iter->second[pvol->GetCopyNo()];
+         int copyNum = touch->GetCopyNumber(depth);
+         copyNum += (dynamic_cast<G4PVPlacement*>(pvol))? -1 : 0;
+         return iter->second[copyNum];
       }
    }
    return -1;

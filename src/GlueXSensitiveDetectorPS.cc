@@ -35,8 +35,6 @@ int GlueXSensitiveDetectorPS::NUM_COLUMNS_PER_ARM = 145;
 int GlueXSensitiveDetectorPS::instanceCount = 0;
 G4Mutex GlueXSensitiveDetectorPS::fMutex = G4MUTEX_INITIALIZER;
 
-std::map<G4LogicalVolume*, int> GlueXSensitiveDetectorPS::fVolumeTable;
-
 GlueXSensitiveDetectorPS::GlueXSensitiveDetectorPS(const G4String& name)
  : G4VSensitiveDetector(name),
    fTileHitsMap(0), fPointsMap(0)
@@ -73,12 +71,14 @@ GlueXSensitiveDetectorPS::GlueXSensitiveDetectorPS(
  : G4VSensitiveDetector(src),
    fTileHitsMap(src.fTileHitsMap), fPointsMap(src.fPointsMap)
 {
+   G4AutoLock barrier(&fMutex);
    ++instanceCount;
 }
 
 GlueXSensitiveDetectorPS &GlueXSensitiveDetectorPS::operator=(const
                                          GlueXSensitiveDetectorPS &src)
 {
+   G4AutoLock barrier(&fMutex);
    *(G4VSensitiveDetector*)this = src;
    fTileHitsMap = src.fTileHitsMap;
    fPointsMap = src.fPointsMap;
@@ -87,12 +87,13 @@ GlueXSensitiveDetectorPS &GlueXSensitiveDetectorPS::operator=(const
 
 GlueXSensitiveDetectorPS::~GlueXSensitiveDetectorPS() 
 {
+   G4AutoLock barrier(&fMutex);
    --instanceCount;
 }
 
 void GlueXSensitiveDetectorPS::Initialize(G4HCofThisEvent* hce)
 {
-   fTileHitsMap = new 
+   fTileHitsMap = new
               GlueXHitsMapPStile(SensitiveDetectorName, collectionName[0]);
    fPointsMap = new
               GlueXHitsMapPSpoint(SensitiveDetectorName, collectionName[1]);
@@ -102,7 +103,7 @@ void GlueXSensitiveDetectorPS::Initialize(G4HCofThisEvent* hce)
 }
 
 G4bool GlueXSensitiveDetectorPS::ProcessHits(G4Step* step, 
-                                              G4TouchableHistory* unused)
+                                             G4TouchableHistory* ROhist)
 {
    double dEsum = step->GetTotalEnergyDeposit();
    if (dEsum == 0)
@@ -157,23 +158,23 @@ G4bool GlueXSensitiveDetectorPS::ProcessHits(G4Step* step,
           fabs(lastPoint->y_cm - x[1]/cm) > 5.0 ||
           fabs(lastPoint->z_cm - x[2]/cm) > 5.0)
       {
-         GlueXHitPSpoint* newPoint = new GlueXHitPSpoint();
+         GlueXHitPSpoint newPoint;
+         newPoint.arm_ = arm;
+         newPoint.column_ = column;
+         newPoint.ptype_G3 = g3type;
+         newPoint.track_ = trackID;
+         newPoint.trackID_ = itrack;
+         newPoint.primary_ = (track->GetParentID() == 0);
+         newPoint.t_ns = t/ns;
+         newPoint.x_cm = x[0]/cm;
+         newPoint.y_cm = x[1]/cm;
+         newPoint.z_cm = x[2]/cm;
+         newPoint.px_GeV = pin[0]/GeV;
+         newPoint.py_GeV = pin[1]/GeV;
+         newPoint.pz_GeV = pin[2]/GeV;
+         newPoint.E_GeV = Ein/GeV;
+         newPoint.dEdx_GeV_cm = dEdx/(GeV/cm);
          fPointsMap->add(key, newPoint);
-         newPoint->arm_ = arm;
-         newPoint->column_ = column;
-         newPoint->ptype_G3 = g3type;
-         newPoint->track_ = trackID;
-         newPoint->trackID_ = itrack;
-         newPoint->primary_ = (track->GetParentID() == 0);
-         newPoint->t_ns = t/ns;
-         newPoint->x_cm = x[0]/cm;
-         newPoint->y_cm = x[1]/cm;
-         newPoint->z_cm = x[2]/cm;
-         newPoint->px_GeV = pin[0]/GeV;
-         newPoint->py_GeV = pin[1]/GeV;
-         newPoint->pz_GeV = pin[2]/GeV;
-         newPoint->E_GeV = Ein/GeV;
-         newPoint->dEdx_GeV_cm = dEdx/(GeV/cm);
       }
    }
 
@@ -183,8 +184,9 @@ G4bool GlueXSensitiveDetectorPS::ProcessHits(G4Step* step,
       int key = GlueXHitPStile::GetKey(arm, column);
       GlueXHitPStile *tile = (*fTileHitsMap)[key];
       if (tile == 0) {
-         tile = new GlueXHitPStile(arm, column);
-         fTileHitsMap->add(key, tile);
+         GlueXHitPStile newtile(arm, column);
+         fTileHitsMap->add(key, newtile);
+         tile = (*fTileHitsMap)[key];
       }
 
       // Add the hit to the hits vector, maintaining strict time ordering
@@ -332,10 +334,9 @@ int GlueXSensitiveDetectorPS::GetIdent(std::string div,
       }
       identifiers = &Refsys::fIdentifierTable[volId];
       if ((iter = identifiers->find(div)) != identifiers->end()) {
-         if (dynamic_cast<G4PVPlacement*>(pvol))
-            return iter->second[pvol->GetCopyNo() - 1];
-         else
-            return iter->second[pvol->GetCopyNo()];
+         int copyNum = touch->GetCopyNumber(depth);
+         copyNum += (dynamic_cast<G4PVPlacement*>(pvol))? -1 : 0;
+         return iter->second[copyNum];
       }
    }
    return -1;

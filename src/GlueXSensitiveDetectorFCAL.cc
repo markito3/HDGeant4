@@ -43,8 +43,6 @@ double GlueXSensitiveDetectorFCAL::THRESH_MEV = 5.;
 int GlueXSensitiveDetectorFCAL::instanceCount = 0;
 G4Mutex GlueXSensitiveDetectorFCAL::fMutex = G4MUTEX_INITIALIZER;
 
-std::map<G4LogicalVolume*, int> GlueXSensitiveDetectorFCAL::fVolumeTable;
-
 GlueXSensitiveDetectorFCAL::GlueXSensitiveDetectorFCAL(const G4String& name)
  : G4VSensitiveDetector(name),
    fBlocksMap(0), fPointsMap(0)
@@ -91,12 +89,14 @@ GlueXSensitiveDetectorFCAL::GlueXSensitiveDetectorFCAL(
  : G4VSensitiveDetector(src),
    fBlocksMap(src.fBlocksMap), fPointsMap(src.fPointsMap)
 {
+   G4AutoLock barrier(&fMutex);
    ++instanceCount;
 }
 
 GlueXSensitiveDetectorFCAL &GlueXSensitiveDetectorFCAL::operator=(const
                                          GlueXSensitiveDetectorFCAL &src)
 {
+   G4AutoLock barrier(&fMutex);
    *(G4VSensitiveDetector*)this = src;
    fBlocksMap = src.fBlocksMap;
    fPointsMap = src.fPointsMap;
@@ -105,12 +105,13 @@ GlueXSensitiveDetectorFCAL &GlueXSensitiveDetectorFCAL::operator=(const
 
 GlueXSensitiveDetectorFCAL::~GlueXSensitiveDetectorFCAL() 
 {
+   G4AutoLock barrier(&fMutex);
    --instanceCount;
 }
 
 void GlueXSensitiveDetectorFCAL::Initialize(G4HCofThisEvent* hce)
 {
-   fBlocksMap = new 
+   fBlocksMap = new
               GlueXHitsMapFCALblock(SensitiveDetectorName, collectionName[0]);
    fPointsMap = new
               GlueXHitsMapFCALpoint(SensitiveDetectorName, collectionName[1]);
@@ -120,7 +121,7 @@ void GlueXSensitiveDetectorFCAL::Initialize(G4HCofThisEvent* hce)
 }
 
 G4bool GlueXSensitiveDetectorFCAL::ProcessHits(G4Step* step, 
-                                              G4TouchableHistory* unused)
+                                               G4TouchableHistory* ROhist)
 {
    double dEsum = step->GetTotalEnergyDeposit();
    const G4ThreeVector &pin = step->GetPreStepPoint()->GetMomentum();
@@ -157,23 +158,23 @@ G4bool GlueXSensitiveDetectorFCAL::ProcessHits(G4Step* step,
    if (trackinfo->GetGlueXHistory() == 0 &&
        xin.dot(pin) > 0 && Ein/MeV > THRESH_MEV)
    {
-      GlueXHitFCALpoint* newPoint = new GlueXHitFCALpoint();
-      G4int key = fPointsMap->entries();
-      fPointsMap->add(key, newPoint);
       int pdgtype = track->GetDynamicParticle()->GetPDGcode();
       int g3type = GlueXPrimaryGeneratorAction::ConvertPdgToGeant3(pdgtype);
-      newPoint->ptype_G3 = g3type;
-      newPoint->track_ = trackID;
-      newPoint->trackID_ = itrack;
-      newPoint->primary_ = (track->GetParentID() == 0);
-      newPoint->t_ns = t/ns;
-      newPoint->x_cm = xin[0]/cm;
-      newPoint->y_cm = xin[1]/cm;
-      newPoint->z_cm = xin[2]/cm;
-      newPoint->px_GeV = pin[0]/GeV;
-      newPoint->py_GeV = pin[1]/GeV;
-      newPoint->pz_GeV = pin[2]/GeV;
-      newPoint->E_GeV = Ein/GeV;
+      GlueXHitFCALpoint newPoint;
+      newPoint.ptype_G3 = g3type;
+      newPoint.track_ = trackID;
+      newPoint.trackID_ = itrack;
+      newPoint.primary_ = (track->GetParentID() == 0);
+      newPoint.t_ns = t/ns;
+      newPoint.x_cm = xin[0]/cm;
+      newPoint.y_cm = xin[1]/cm;
+      newPoint.z_cm = xin[2]/cm;
+      newPoint.px_GeV = pin[0]/GeV;
+      newPoint.py_GeV = pin[1]/GeV;
+      newPoint.pz_GeV = pin[2]/GeV;
+      newPoint.E_GeV = Ein/GeV;
+      G4int key = fPointsMap->entries();
+      fPointsMap->add(key, newPoint);
       trackinfo->SetGlueXHistory(2);
    }
 
@@ -185,8 +186,9 @@ G4bool GlueXSensitiveDetectorFCAL::ProcessHits(G4Step* step,
       int key = GlueXHitFCALblock::GetKey(column, row);
       GlueXHitFCALblock *block = (*fBlocksMap)[key];
       if (block == 0) {
-         block = new GlueXHitFCALblock(column, row);
-         fBlocksMap->add(key, block);
+         GlueXHitFCALblock newblock(column, row);
+         fBlocksMap->add(key, newblock);
+         block = (*fBlocksMap)[key];
       }
 
       // Handle hits in the lead glass
@@ -195,6 +197,19 @@ G4bool GlueXSensitiveDetectorFCAL::ProcessHits(G4Step* step,
          double dist = 0.5 * LENGTH_OF_BLOCK - xlocal[2];
          double dEcorr = dEsum * exp(-dist / ATTENUATION_LENGTH);
          double tcorr = t + dist / C_EFFECTIVE;
+
+         // Apply effective response corrections, depending on particle type
+         int pmass = track->GetDynamicParticle()->GetMass();
+         if (pmass < 1 * MeV) { // must be one of e+,e-,gamma
+            dEcorr *= 0.985;
+         }
+         else {
+            double gamma = Ein / pmass; // nothing massless here
+            dEcorr *= (gamma > 1.25)? 1.35 : 0;
+         }
+
+         if (dEcorr == 0)
+            return true;
 
          // Add the hit to the hits vector, maintaining strict time ordering
 
@@ -210,11 +225,10 @@ G4bool GlueXSensitiveDetectorFCAL::ProcessHits(G4Step* step,
             }
          }
          if (merge_hit) {
-            // Use the time from the earlier hit but add the energy deposition
+            // Merge the time with the existing hit, add the energy deposition
+            hiter->t_ns = hiter->t_ns * hiter->E_GeV + dEcorr/GeV * tcorr/ns;
             hiter->E_GeV += dEcorr/GeV;
-            if (hiter->t_ns*ns > tcorr) {
-               hiter->t_ns = tcorr/ns;
-            }
+            hiter->t_ns /= hiter->E_GeV;
          }
          else if ((int)block->hits.size() < MAX_HITS) {
             // create new hit 
@@ -374,7 +388,7 @@ void GlueXSensitiveDetectorFCAL::EndOfEvent(G4HCofThisEvent*)
 }
 
 int GlueXSensitiveDetectorFCAL::GetIdent(std::string div, 
-                                        const G4VTouchable *touch)
+                                         const G4VTouchable *touch)
 {
    const HddsG4Builder* bldr = GlueXDetectorConstruction::GetBuilder();
    std::map<std::string, std::vector<int> >::const_iterator iter;
@@ -390,10 +404,9 @@ int GlueXSensitiveDetectorFCAL::GetIdent(std::string div,
       }
       identifiers = &Refsys::fIdentifierTable[volId];
       if ((iter = identifiers->find(div)) != identifiers->end()) {
-         if (dynamic_cast<G4PVPlacement*>(pvol))
-            return iter->second[pvol->GetCopyNo() - 1];
-         else
-            return iter->second[pvol->GetCopyNo()];
+         int copyNum = touch->GetCopyNumber(depth);
+         copyNum += (dynamic_cast<G4PVPlacement*>(pvol))? -1 : 0;
+         return iter->second[copyNum];
       }
    }
    return -1;
