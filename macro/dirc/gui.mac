@@ -6,7 +6,7 @@
 #
 # Add icons of general interest
 #
-/control/execute icons.mac
+#/control/execute icons.mac
 #
 # File menu :
 /gui/addMenu file File
@@ -34,6 +34,7 @@
 /gui/addButton field "0.2 tesla" "/B2/det/setField 0.2 tesla"
 /gui/addButton field "2.0 tesla" "/B2/det/setField 2.0 tesla"
 #
+
 # Viewer menu :
 /gui/addMenu viewer Viewer
 /gui/addButton viewer "Set style surface" "/vis/viewer/set/style surface"
@@ -42,6 +43,4 @@
 /gui/addButton viewer "Update viewer (interaction or end-of-file)" "/vis/viewer/update"
 /gui/addButton viewer "Flush viewer (= refresh + update)" "/vis/viewer/flush"
 /gui/addButton viewer "Update scene" "/vis/scene/notifyHandlers"
-#
-# User defined icon :
-/gui/addIcon "Run beam on" user_icon "/run/beamOn 1" run.png 
+

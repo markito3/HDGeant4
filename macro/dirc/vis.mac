@@ -27,9 +27,9 @@
 
 /vis/scene/create
 #/vis/scene/add/volume SHLD ! 2
-#/vis/scene/add/volume LASS ! 1
+/vis/scene/add/volume LASS ! 1
 /vis/scene/add/volume DCMV
-#/vis/scene/add/volume FCAL ! 2
+/vis/scene/add/volume FCAL ! 2
 #/vis/scene/add/volume MAG3 ! 2
 
 /vis/sceneHandler/attach
@@ -83,3 +83,4 @@
 # /vis/geometry/set/visibility MAG3::1 0 false
 # /vis/geometry/set/visibility SHLD::1 0 false
 # /vis/geometry/set/daughtersInvisible SHLD::1 0 true
+/vis/geometry/set/visibility PIXV 0 false
