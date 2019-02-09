@@ -3,7 +3,7 @@
 #include "glxtools.C"
 
 void drawMean(TString infile="drc.root"){
-  if(!glx_initc(infile,1,"data/drawHP")) return;
+  if(!glx_initc(infile,1,"data/drawMean")) return;
 
   const int max=108*64;
   TH1F *htime[max];
@@ -15,7 +15,7 @@ void drawMean(TString infile="drc.root"){
   int c1[7000]={0};
 
   DrcHit hit;
-  for (Int_t e=0; e<glx_ch->GetEntries() && e<5000; e++){
+  for (Int_t e=0; e<glx_ch->GetEntries(); e++){
     glx_ch->GetEntry(e);
     for (Int_t t=0; t<glx_events->GetEntriesFast(); t++){
       glx_nextEventc(e,t,100);
@@ -43,11 +43,11 @@ void drawMean(TString infile="drc.root"){
   TCanvas *c = new TCanvas("c","c",800,500);
   int ii;
   for(int i=0; i<max; i++){
-    std::cout<<"time "<<htime[i]->GetEntries()<<std::endl;    
+     std::cout<<"time "<<htime[i]->GetEntries()<<std::endl;    
     TVector3 v = glx_fit(htime[i],15,20,20);
     int pix=i%64;
     int pmt = i/64;
-    glx_hdigi[pmt]->Fill(pix%8, 7-pix/8,v.Y());
+    glx_hdigi[pmt]->Fill(pix%8, pix/8,v.Y());
 
     // if(i>1000){
     //   htime[i]->Draw();
@@ -64,6 +64,6 @@ void drawMean(TString infile="drc.root"){
   
   glx_drawDigi("m,p,v\n",0);
   glx_canvasAdd(glx_cdigi);
-  glx_cdigi->SetName(TString("cdigi_")+infile);
-  // glx_canvasSave(1,0);
+  glx_cdigi->SetName(TString("cdigiMM_")+infile);
+  glx_canvasSave(1,0);
 }

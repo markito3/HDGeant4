@@ -1,5 +1,5 @@
 #define glx__sim
-#include "../../../../sim-recon/master/src/plugins/Analysis/pid_dirc/DrcEvent.h"
+#include "../../../halld_recon/src/plugins/Analysis/pid_dirc/DrcEvent.h"
 #include "glxtools.C"
 
 //void drawMult(TString infile="data/out_kaons_100k.root"){
@@ -41,8 +41,7 @@ void drawMult(TString infile="data/sim_hprime2600_100k_tr_nodc.root"){
     	Int_t pix = hit.GetPixelId();
     	gpos = hit.GetPosition();
     	Double_t time = hit.GetLeadTime();
-    	if(pmt<108) glx_hdigi[pmt]->Fill(pix%8, 7-pix/8);
-    	//if(pmt>=108) glx_hdigi[pmt-108]->Fill(pix%8, 7-pix/8);
+    	if(pmt<108) glx_hdigi[pmt]->Fill(pix%8, pix/8);
 	hEnergy->Fill(hit.GetEnergy()*1E9);
       }
 
