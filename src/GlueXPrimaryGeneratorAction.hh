@@ -143,12 +143,16 @@ class GlueXPrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
  private:
    static G4Mutex fMutex;
    static std::list<GlueXPrimaryGeneratorAction*> fInstance;
-   double DIRC_LUT_X[48], DIRC_BAR_Y[48];
-   double DIRC_LUT_Z;
-   double DIRC_QZBL_DY, DIRC_QZBL_DZ, DIRC_OWDG_DZ;
-   double DIRC_LED_OBCS_FDTH_X, DIRC_LED_OBCS_FDTH_Z, DIRC_LED_OBCN_FDTH_X, DIRC_LED_OBCN_FDTH_Z;
-   double DIRC_LED_OBCN_FDTH1_Y, DIRC_LED_OBCN_FDTH2_Y, DIRC_LED_OBCN_FDTH3_Y;
-   double DIRC_LED_OBCS_FDTH4_Y, DIRC_LED_OBCS_FDTH5_Y, DIRC_LED_OBCS_FDTH6_Y;
+
+   double DIRC_LUT_X[48], DIRC_LUT_Y[48], DIRC_LUT_Z[48]; //Pre-Rotated Positions
+   double BXXA_boxX[48], BXXA_boxY[48], BXXA_boxZ[48];
+
+   G4ThreeVector DCML10_InHall, DCML11_InHall, DCML01_InHall, DCML00_InHall;
+   vector<double> DCML10_rot, DCML11_rot, DCML01_rot, DCML00_rot;
+
+   vector<double> MRAS_rot, MRAN_rot;
+   vector<double> OBCS_rot, OBCN_rot;
+   vector<G4ThreeVector> FDTHs_InHall;
 
 };
 
