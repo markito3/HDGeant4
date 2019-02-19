@@ -155,7 +155,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 	       BXXA_boxY[i] = BXXA_boxXYZ_loc[1];
 	       BXXA_boxZ[i] = BXXA_boxXYZ_loc[2];
 
-               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML10_XYZ[0] - DCBR_XYZ[0] - 0.   - BXXA_posXYZ[0] - BXXA_boxXYZ_loc[0]/2.) * cm;
+               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML10_XYZ[0] - DCBR_XYZ[0] - 0.   - BXXA_posXYZ[0] - BXXA_boxXYZ_loc[0]/2.) * cm - 0.0025;
                DIRC_LUT_Y[i] = (DIRC[1] + DRCC[1] + DCML10_XYZ[1] - DCBR_XYZ[1] + 1.75 - BXXA_boxXYZ_loc[1]/2.) * cm;
                DIRC_LUT_Z[i] = (DIRC[2] + DRCC[2] + DCML10_XYZ[2] + DCBR_XYZ[2] + 1.7  - BXXA_boxXYZ_loc[2]/2.) * cm;
 
@@ -179,7 +179,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 	       BXXA_boxY[i] = BXXA_boxXYZ_loc[1];
 	       BXXA_boxZ[i] = BXXA_boxXYZ_loc[2];
 
-               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML11_XYZ[0] - DCBR_XYZ[0] - 0.   - BXXA_posXYZ[0] - BXXA_boxXYZ_loc[0]/2.) * cm;
+               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML11_XYZ[0] - DCBR_XYZ[0] - 0.   - BXXA_posXYZ[0] - BXXA_boxXYZ_loc[0]/2.) * cm - 0.0025;
                DIRC_LUT_Y[i] = (DIRC[1] + DRCC[1] + DCML11_XYZ[1] - DCBR_XYZ[1] + 1.75 - BXXA_boxXYZ_loc[1]/2.) * cm;
                DIRC_LUT_Z[i] = (DIRC[2] + DRCC[2] + DCML11_XYZ[2] + DCBR_XYZ[2] + 1.7  - BXXA_boxXYZ_loc[2]/2.) * cm;
 
