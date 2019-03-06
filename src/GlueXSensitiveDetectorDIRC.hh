@@ -17,7 +17,6 @@
 #include "G4AutoLock.hh"
 
 #include "GlueXHitDIRCflash.hh"
-#include "GlueXHitDIRCpoint.hh"
 #include "GlueXHitDIRCPmt.hh"
 #include "GlueXHitDIRCBar.hh"
 #include "GlueXHitDIRCWob.hh"
@@ -52,6 +51,7 @@ class GlueXSensitiveDetectorDIRC : public G4VSensitiveDetector
   std::map<G4LogicalVolume*, int> fVolumeTable;
   
   static int MAX_HITS;
+  static int MAX_PIXELS;
   // put all other detector response parameters here
   static double TWO_HIT_TIME_RESOL;
   

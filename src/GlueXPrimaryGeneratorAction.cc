@@ -73,11 +73,97 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
       exit(-1);
    }
 
+   // get positions for LUT from XML geometry
+   std::map<int, int> dirclutpars;
+   if (instanceCount == 1) {
+      
+      if (user_opts->Find("DIRCLUT", dirclutpars)) {
+         
+         extern int run_number;
+         extern jana::JApplication *japp;
+         if (japp == 0) {
+            G4cerr << "Error in GlueXPrimaryGeneratorAction constructor - "
+              << "jana global DApplication object not set, "
+              << "cannot continue." << G4endl;
+            exit(-1);
+         }
+         jana::JGeometry *jgeom = japp->GetJGeometry(run_number);
+         if (japp == 0) {   // dummy
+            jgeom = 0;
+            G4cout << "DIRC: ALL parameters loaded from ccdb" << G4endl;
+         }
+         
+         vector<double>DIRC;
+         vector<double>DRCC;
+         vector<double>DCML00_XYZ;
+         vector<double>DCML01_XYZ;
+         vector<double>DCML10_XYZ;
+         vector<double>DCML11_XYZ;
+         vector<double>WNGL00_XYZ;
+         vector<double>WNGL01_XYZ;
+         vector<double>WNGL10_XYZ;
+         vector<double>WNGL11_XYZ;
+         vector<double>OWDG_XYZ;
+         jgeom->Get("//section/composition/posXYZ[@volume='DIRC']/@X_Y_Z", DIRC);
+         jgeom->Get("//composition[@name='DIRC']/posXYZ[@volume='DRCC']/@X_Y_Z", DRCC);
+         jgeom->Get("//composition[@name='DRCC']/posXYZ[@volume='DCML00']/@X_Y_Z", DCML00_XYZ);
+         jgeom->Get("//composition[@name='DRCC']/posXYZ[@volume='DCML01']/@X_Y_Z", DCML01_XYZ);
+         jgeom->Get("//composition[@name='DRCC']/posXYZ[@volume='DCML10']/@X_Y_Z", DCML10_XYZ);
+         jgeom->Get("//composition[@name='DRCC']/posXYZ[@volume='DCML11']/@X_Y_Z", DCML11_XYZ);
+         jgeom->Get("//composition[@name='DCML00']/posXYZ[@volume='WNGL']/@X_Y_Z", WNGL00_XYZ);
+         jgeom->Get("//composition[@name='DCML01']/posXYZ[@volume='WNGL']/@X_Y_Z", WNGL01_XYZ);
+         jgeom->Get("//composition[@name='DCML10']/posXYZ[@volume='WNGL']/@X_Y_Z", WNGL10_XYZ);
+         jgeom->Get("//composition[@name='DCML11']/posXYZ[@volume='WNGL']/@X_Y_Z", WNGL11_XYZ);
+         jgeom->Get("//composition[@name='DCML11']/posXYZ[@volume='WNGL']/@X_Y_Z", WNGL11_XYZ);
+         jgeom->Get("//trd[@name='OWDG']/@Xmp_Ymp_Z", OWDG_XYZ);
+         DIRC_LUT_Z = (DIRC[2] + DRCC[2] + DCML01_XYZ[2] + 0.8625) * cm;
+         DIRC_QZBL_DY = 3.5 * cm;   // nominal width to generate LUT
+         DIRC_QZBL_DZ = 1.725 * cm; // nominal thickness to generate LUT
+         DIRC_OWDG_DZ = OWDG_XYZ[4];
+
+         // set array of bar positions
+         for (int i=0; i<48; i++) {
+            vector<double>DCBR_XYZ;
+            if (i<12) {
+               std::stringstream geomDCML10;
+               geomDCML10 << "//composition[@name='DCML10']/posXYZ[@volume='DCBR" 
+                     << std::setfill('0') << std::setw(2) << i << "']/@X_Y_Z"; 
+               jgeom->Get(geomDCML10.str(), DCBR_XYZ);
+               DIRC_BAR_Y[i] = (DCML10_XYZ[1] - DCBR_XYZ[1]) * cm;
+               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML10_XYZ[0] - WNGL10_XYZ[0] + DIRC_OWDG_DZ) * cm;
+            }
+            else if (i<24) {
+               std::stringstream geomDCML11;
+               geomDCML11 << "//composition[@name='DCML11']/posXYZ[@volume='DCBR" 
+                     << std::setfill('0') << std::setw(2) << i << "']/@X_Y_Z"; 
+               jgeom->Get(geomDCML11.str(), DCBR_XYZ);
+               DIRC_BAR_Y[i] = (DCML11_XYZ[1] - DCBR_XYZ[1]) * cm;
+               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML11_XYZ[0] - WNGL11_XYZ[0] + DIRC_OWDG_DZ) * cm;
+            }
+            else if (i<36) {
+               std::stringstream geomDCML01;
+               geomDCML01 << "//composition[@name='DCML01']/posXYZ[@volume='DCBR" 
+                     << std::setfill('0') << std::setw(2) << i << "']/@X_Y_Z"; 
+               jgeom->Get(geomDCML01.str(), DCBR_XYZ);
+               DIRC_BAR_Y[i] = (DCML01_XYZ[1] + DCBR_XYZ[1]) * cm;
+               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML01_XYZ[0] + WNGL01_XYZ[0] - DIRC_OWDG_DZ) * cm;
+            }
+            else if (i<48) {
+               std::stringstream geomDCML00;
+               geomDCML00 << "//composition[@name='DCML00']/posXYZ[@volume='DCBR" 
+                     << std::setfill('0') << std::setw(2) << i << "']/@X_Y_Z"; 
+               jgeom->Get(geomDCML00.str(), DCBR_XYZ);
+               DIRC_BAR_Y[i] = (DCML00_XYZ[1] + DCBR_XYZ[1]) * cm;
+               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML00_XYZ[0] + WNGL00_XYZ[0] - DIRC_OWDG_DZ) * cm;
+            }            
+         }
+      }
+   }
+
    std::map<int,std::string> infile;
    std::map<int,double> beampars;
    std::map<int,double> kinepars;
-   std::map<int, int> dirclutpars;
-   
+
    // Three event source options are supported:
    // 1) external generator, hddm input stream source
    // 2) internal coherent bremsstrahlung beam generator
@@ -106,20 +192,19 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 
    else if (user_opts->Find("DIRCLUT", dirclutpars))
    {
-     fGunParticle.geantType = 0;
-     fGunParticle.pdgType = 999999;
-     fGunParticle.partDef = fParticleTable->FindParticle("opticalphoton");
-     fGunParticle.deltaR = 0;
-     fGunParticle.deltaZ = 0;
-     fGunParticle.mom = 3.18 * eV;
+      fGunParticle.geantType = 0;
+      fGunParticle.pdgType = 999999;
+      fGunParticle.partDef = fParticleTable->FindParticle("opticalphoton");
+      fGunParticle.deltaR = 0;
+      fGunParticle.deltaZ = 0;
+      fGunParticle.mom = 3.18 * eV;
 
-
-     fGunParticle.deltaMom = 0;
-     fGunParticle.deltaTheta = 0;
-     fGunParticle.deltaPhi = 0;
-     fParticleGun->SetParticleDefinition(fGunParticle.partDef);
+      fGunParticle.deltaMom = 0;
+      fGunParticle.deltaTheta = 0;
+      fGunParticle.deltaPhi = 0;
+      fParticleGun->SetParticleDefinition(fGunParticle.partDef);
  
-     fSourceType = SOURCE_TYPE_PARTICLE_GUN;
+      fSourceType = SOURCE_TYPE_PARTICLE_GUN;
    }
 
    else if (user_opts->Find("KINE", kinepars))
@@ -140,12 +225,12 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
          fGunParticle.partDef = fParticleTable->FindParticle("opticalphoton");
       }            
       else {
-	if (kinepars[1] > 100)
-	  fGunParticle.geantType = kinepars[1] - 100;
-	else
-	  fGunParticle.geantType = kinepars[1];
-          fGunParticle.pdgType = ConvertGeant3ToPdg(fGunParticle.geantType);
-          fGunParticle.partDef = fParticleTable->FindParticle(fGunParticle.pdgType);
+         if (kinepars[1] > 100)
+            fGunParticle.geantType = kinepars[1] - 100;
+         else
+            fGunParticle.geantType = kinepars[1];
+         fGunParticle.pdgType = ConvertGeant3ToPdg(fGunParticle.geantType);
+         fGunParticle.partDef = fParticleTable->FindParticle(fGunParticle.pdgType);
       }
       if (fGunParticle.partDef == 0) {   
          G4cerr << "GlueXPrimaryGeneratorAction constructor error - "
@@ -185,7 +270,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 
       fGunParticle.mom = kinepars[2] * GeV;
       if (kinepars[1] > 100) {
-	 fGunParticle.theta = kinepars[3] * degree;
+         fGunParticle.theta = kinepars[3] * degree;
          fGunParticle.phi = kinepars[4] * degree;
          fGunParticle.deltaMom = kinepars[5] * GeV;
          fGunParticle.deltaTheta = kinepars[6] * degree;
@@ -404,35 +489,37 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
    if (fGunParticle.deltaPhi > 0)
       phip += (G4UniformRand() - 0.5) * fGunParticle.deltaPhi;
 
-   if (user_opts->Find("DIRCLUT", dirclutpars)){
-     double x(2940), y(0), z(5858.);
-     G4ThreeVector vec(0,0,1);
-     double rand1 = G4UniformRand();
-     double rand2 = G4UniformRand();
-     vec.setTheta(acos(rand1));
-     vec.setPhi(2*M_PI*rand2);
-     vec.rotateY(M_PI/2.);
-     //double arr[] = {-812.5, -297.5, 297.5, 812.5};
-     double arr[] = {-297.5+193.3, -812.5+193.3, 297.5-193.3, 812.5-193.3};
-     y = arr[dirclutpars[1]/12]+(dirclutpars[1]%12)*35.15;
-     if(dirclutpars[1] < 24){
-       vec.rotateY(M_PI);
-       x = -2940;
-       y = arr[dirclutpars[1]/12]-(dirclutpars[1]%12)*35.15;
-     }
-     
-     y += 15-30*G4UniformRand();
-     z += 8-16*G4UniformRand();
+   // Special case of Cherenkov photon gun for DIRC Look Up Tables (LUT)
+   if (user_opts->Find("DIRCLUT", dirclutpars)) {
 
-     thetap = vec.theta();
-     phip = vec.phi();
-     fParticleGun->SetParticlePosition(G4ThreeVector(x,y,z));
+      // array of bar y-positions for LUT from JGeometry
+      double y = 0.; // no shift
+      double x = DIRC_LUT_X[dirclutpars[1]];
+      double z = DIRC_LUT_Z;
+
+      G4ThreeVector vec(0,0,1);
+      double rand1 = G4UniformRand();
+      double rand2 = G4UniformRand();
+      vec.setTheta(acos(rand1));
+      vec.setPhi(2*M_PI*rand2);
+      vec.rotateY(M_PI/2.);
+      y = DIRC_BAR_Y[dirclutpars[1]];
+      if (dirclutpars[1] < 24) {
+        vec.rotateY(M_PI);
+      }
+     
+      // spread over end of bar in y and z
+      y += DIRC_QZBL_DY/2.0 - DIRC_QZBL_DY*G4UniformRand();
+      z += DIRC_QZBL_DZ/2.0 - DIRC_QZBL_DZ*G4UniformRand(); 
+
+      thetap = vec.theta();
+      phip = vec.phi();
+      fParticleGun->SetParticlePosition(G4ThreeVector(x,y,z));
    }
 
    G4ThreeVector mom(p * sin(thetap) * cos(phip),
                      p * sin(thetap) * sin(phip),
                      p * cos(thetap));
-
    fParticleGun->SetParticleMomentum(mom);
    fParticleGun->SetParticleTime(0);
 
@@ -537,30 +624,59 @@ int GlueXPrimaryGeneratorAction::ConvertGeant3ToPdg(int Geant3type)
       case 24  : return 3334;     // Omega- (PB)
       case 25  : return -2112;    // anti-neutron
       case 26  : return -3122;    // anti-Lambda
-      case 27  : return -3222;    // Sigma-
-      case 28  : return -3212;    // Sigma0
-      case 29  : return -3112;    // Sigma+ (PB)*/
-      case 30  : return -3322;    // Xi0
-      case 31  : return -3312;    // Xi+
-      case 32  : return -3334;    // Omega+ (PB)
-      case 33  : return -15;      // tau+
-      case 34  : return 15;       // tau-
-      case 35  : return 411;      // D+
-      case 36  : return -411;     // D-
-      case 37  : return 421;      // D0
-      case 38  : return -421;     // D0
-      case 39  : return 431;      // Ds+
-      case 40  : return -431;     // anti Ds-
-      case 41  : return 4122;     // Lamba_c+
-      case 42  : return 24;       // W+
-      case 43  : return -24;      // W-
-      case 44  : return 23;       // Z
+      case 27  : return -3222;    // anti-Sigma-
+      case 28  : return -3212;    // anti-Sigma0
+      case 29  : return -3112;    // anti-Sigma+
+      case 30  : return -3322;    // anti-Xi0
+      case 31  : return -3312;    // anti-Xi+
+      case 32  : return -3334;    // anti-Omega+ 
       case 45  : return 1000010020; // deuteron
       case 46  : return 1000010030; // triton
       case 47  : return 1000020040; // alpha
       case 48  : return 0;        // geantino (no PDG type)
       case 49  : return 1000020030; // He3 ion
       case 50  : return 0;        // Cerenkov photon (no PDG type)
+
+      // These are "private" Geant3 types that were defined in hdgeant
+      case 33  : return 223;      // omega(782)
+      case 34  : return 333;      // phi(1020)
+      case 35  : return 331;      // etaPrime(958)
+      case 36  : return 0;        // unused
+      case 37  : return 0;        // unused
+      case 38  : return 0;        // unused
+      case 39  : return 0;        // unused
+      case 40  : return 0;        // unused
+      case 41  : return 0;        // unused
+      case 42  : return 213;      // rho(770)+
+      case 43  : return -213;     // rho(770)-
+      case 44  : return 113;      // rho(770)0
+
+      case 82  : return 2224;     // Delta++
+      case 83  : return 443;      // Jpsi
+      case 84  : return 441;      // Eta_c
+      case 85  : return 10441;    // Chi_c0
+      case 86  : return 20443;    // Chi_c1
+      case 87  : return 445;      // Chi_c2
+      case 88  : return 100443;   // Psi2s
+      case 89  : return 421;      // D0
+      case 90  : return 411;      // D+
+      case 91  : return 10421;    // Dstar0
+      case 92  : return 10411;    // Dstar+
+      case 93  : return 4022;     // Lambda_c+
+      case 94  : return -421;     // anti-D0
+
+      case 163  : return 9000111; // a0(980)
+      case 164  : return 9010221; // f0(980)
+      case 165  : return 313;     // K*(892)0
+      case 166  : return 323;     // K*(892)+
+      case 167  : return -323;    // K*(892)-
+      case 168  : return -313;    // anti-K*(892)0
+      case 169  : return 20323;   // K1(1400)+
+      case 170  : return -20323;  // K1(1400)-
+      case 171  : return 4122;    // b1(1235)+
+      case 172  : return 3224;    // Sigma*(1385)+
+      case 173  : return 3214;    // Sigma*(1385)0
+      case 174  : return 3114;    // Sigma*(1385)-
 
       default  :
          G4cout << "Warning in GlueXPrimaryGeneratorAction::"
@@ -607,31 +723,54 @@ int GlueXPrimaryGeneratorAction::ConvertPdgToGeant3(int PDGtype)
       case       3112 : return 21;    // Sigma-
       case       3322 : return 22;    // Xi0
       case       3312 : return 23;    // Xi-
-      case       3334 : return 24;    // Omega- (PB)
+      case       3334 : return 24;    // Omega-
       case      -2112 : return 25;    // anti-neutron
       case      -3122 : return 26;    // anti-Lambda
       case      -3222 : return 27;    // Sigma-
       case      -3212 : return 28;    // Sigma0
-      case      -3112 : return 29;    // Sigma+ (PB)*/
+      case      -3112 : return 29;    // Sigma+
       case      -3322 : return 30;    // Xi0
       case      -3312 : return 31;    // Xi+
-      case      -3334 : return 32;    // Omega+ (PB)
-      case        -15 : return 33;    // tau+
-      case         15 : return 34;    // tau-
-      case        411 : return 35;    // D+
-      case       -411 : return 36;    // D-
-      case        421 : return 37;    // D0
-      case       -421 : return 38;    // D0
-      case        431 : return 39;    // Ds+
-      case       -431 : return 40;    // anti Ds-
-      case       4122 : return 41;    // Lamba_c+
-      case         24 : return 42;    // W+
-      case        -24 : return 43;    // W-
-      case         23 : return 44;    // Z
+      case      -3334 : return 32;    // Omega+
       case 1000010020 : return 45;    // deuteron
       case 1000010030 : return 46;    // triton
       case 1000020040 : return 47;    // alpha
-      case 1000020030 : return 49;    // He3 ion
+      case 1000020030 : return 49;    // He3
+
+      // These are "private" Geant3 types that were defined in hdgeant
+      case 223        : return 33;    // omega(782)
+      case 333        : return 34;    // phi(1020)
+      case 331        : return 35;    // etaPrime(958)
+      case 213        : return 42;    // rho(770)+
+      case -213       : return 43;    // rho(770)-
+      case 113        : return 44;    // rho(770)0
+
+      case 2224       : return 82;    // Delta++
+      case 443        : return 83;    // Jpsi
+      case 441        : return 84;    // Eta_c
+      case 10441      : return 85;    // Chi_c0
+      case 20443      : return 86;    // Chi_c1
+      case 445        : return 87;    // Chi_c2
+      case 100443     : return 88;    // Psi2s
+      case 421        : return 89;    // D0
+      case 411        : return 90;    // D+
+      case 10421      : return 91;    // Dstar0
+      case 10411      : return 92;    // Dstar+
+      case 4022       : return 93;    // Lambda_c+
+      case -421       : return 94;    // anti-D0
+
+      case 9000111    : return 163;   // a0(980)
+      case 9010221    : return 164;   // f0(980)
+      case 313        : return 165;   // K*(892)0
+      case 323        : return 166;   // K*(892)+
+      case -323       : return 167;   // K*(892)-
+      case -313       : return 168;   // anti-K*(892)0
+      case 20323      : return 169;   // K1(1400)+
+      case -20323     : return 170;   // K1(1400)-
+      case 4122       : return 171;   // b1(1235)+
+      case 3224       : return 172;   // Sigma*(1385)+
+      case 3214       : return 173;   // Sigma*(1385)0
+      case 3114       : return 174;   // Sigma*(1385)-
 
       default  :
          if (PDGtype < 1000000000) {

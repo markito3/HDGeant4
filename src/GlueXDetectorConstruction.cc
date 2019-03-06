@@ -58,7 +58,6 @@ using namespace xercesc;
 
 #include "XString.hpp"
 #include "XParsers.hpp"
-#include "G4GDMLParser.hh"
 
 #include <string.h>
 #include <libgen.h>
@@ -126,6 +125,7 @@ GlueXDetectorConstruction::GlueXDetectorConstruction(G4String hddsFile)
       std::string url = getenv("JANA_GEOMETRY_URL");
       int run = HddmOutput::getRunNo();
       fGeometryXML = new HddsGeometryXML(url, run);
+      last_md5_checksum = fGeometryXML->GetChecksum();
       document = fGeometryXML->getDocument();
 #else
       int size=100;
@@ -248,12 +248,7 @@ G4VPhysicalVolume* GlueXDetectorConstruction::Construct()
    G4LogicalVolume *worldvol = fHddsBuilder.getWorldVolume();
    G4cout << "Root geometry volume " << worldvol->GetName();
    worldvol->SetName("World");
-
    G4cout << " configured as " << worldvol->GetName() << G4endl;
-
-   // G4GDMLParser parser;
-   // parser.Write("geom.gdml", worldvol);
-   
    worldvol->SetVisAttributes(new G4VisAttributes(false));
    return new G4PVPlacement(0, G4ThreeVector(), worldvol, "World", 0, 0, 0);
 }
@@ -373,28 +368,35 @@ void GlueXDetectorConstruction::ConstructSDandField()
          }
          iter->second->SetSensitiveDetector(ftofHandler);
       }
-      else if (volname == "QZBL" || volname == "PIXV") {
-	if (dircHandler == 0) {
-	  dircHandler = new GlueXSensitiveDetectorDIRC("dirc");
-	  SDman->AddNewDetector(dircHandler);
-	}
-	iter->second->SetSensitiveDetector(dircHandler);
+      // radiator volume: BNNM (NN = bar number 0-47 and M is sub-bar character A-D)
+      else if (volname == "PIXV" || 
+               (volname(0,1)(0) == 'B' && 
+                10*((int)volname(1,1)(0)-48)+(int)volname(2,1)(0)-48 >= 0 &&
+                10*((int)volname(1,1)(0)-48)+(int)volname(2,1)(0)-48 < 48))
+      {  // this is nasty, but it works
+         if (dircHandler == 0) {
+            dircHandler = new GlueXSensitiveDetectorDIRC("dirc");
+            SDman->AddNewDetector(dircHandler);
+         }
+         iter->second->SetSensitiveDetector(dircHandler);
       }
       else if (volname == "FWM1" || volname == "FWM2" || volname == "FTMR" ||
-	       volname == "TSM1" || volname == "TSM2" || volname == "TSM3" ||
-	       volname == "FSM1" || volname == "FSM2" || volname == "OWDG") {
-	if (dircHandler == 0) {
-	  dircHandler = new GlueXSensitiveDetectorDIRC("dirc");
-	  SDman->AddNewDetector(dircHandler);
-	}
-	iter->second->SetSensitiveDetector(dircHandler);
+               volname == "TSM1" || volname == "TSM2" || volname == "TSM3" ||
+               volname == "FSM1" || volname == "FSM2" || volname == "OWDG" ||
+               (volname(0,1)(0) == 'A' && volname(0,1)(1) == 'G') )
+      {
+         if (dircHandler == 0) {
+           dircHandler = new GlueXSensitiveDetectorDIRC("dirc");
+           SDman->AddNewDetector(dircHandler);
+         }
+         iter->second->SetSensitiveDetector(dircHandler);
       }
       else if (volname == "CERW" || volname == "CPPC") {
-	if (cereHandler == 0) {
-	  cereHandler = new GlueXSensitiveDetectorCERE("cere");
-	  SDman->AddNewDetector(cereHandler);
-	}
-	iter->second->SetSensitiveDetector(cereHandler);
+         if (cereHandler == 0) {
+            cereHandler = new GlueXSensitiveDetectorCERE("cere");
+            SDman->AddNewDetector(cereHandler);
+         }
+         iter->second->SetSensitiveDetector(cereHandler);
       }
       else if (volname == "CPPG") {
          if (fmwpcHandler == 0) {
@@ -461,9 +463,13 @@ void GlueXDetectorConstruction::CloneF()
             // First time we see this FM, let's clone and remember...
 
             G4ChordFinder *cfinder = masterFM->GetChordFinder();
-            //G4MagInt_Driver *midriver = cfinder->GetIntegrationDriver();
-	    G4MagInt_Driver *midriver = (G4MagInt_Driver*)cfinder->GetIntegrationDriver();
+#if G4VERSION_10_04_OR_LATER
+            G4VIntegrationDriver *midriver = cfinder->GetIntegrationDriver();
+            double stepMinimum = 1e-2;
+#else
+            G4MagInt_Driver *midriver = cfinder->GetIntegrationDriver();
             double stepMinimum = midriver->GetHmin();
+#endif
             G4MagIntegratorStepper *stepper = midriver->GetStepper();
             const G4Field *field = masterFM->GetDetectorField();
 
@@ -591,7 +597,6 @@ GlueXParallelWorld::~GlueXParallelWorld() { }
 
 void GlueXParallelWorld::Construct()
 {
-  
    G4VPhysicalVolume* ghostWorld = GetWorld();
    G4LogicalVolume* worldLogical = ghostWorld->GetLogicalVolume();
    for (int child = fTopVolume->GetNoDaughters() - 1; child >= 0; --child) {

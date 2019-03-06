@@ -28,6 +28,7 @@
 
 // Cutoff on the total number of allowed hits
 int GlueXSensitiveDetectorDIRC::MAX_HITS = 1000;
+int GlueXSensitiveDetectorDIRC::MAX_PIXELS = 6912;
 
 // Minimum hit time difference for two hits on the same tube
 double GlueXSensitiveDetectorDIRC::TWO_HIT_TIME_RESOL = 50*ns;
@@ -52,8 +53,8 @@ GlueXSensitiveDetectorDIRC::GlueXSensitiveDetectorDIRC(const G4String& name)
     extern jana::JApplication *japp;
     if (japp == 0) {
       G4cerr << "Error in GlueXSensitiveDetector constructor - "
-	     << "jana global DApplication object not set, "
-	     << "cannot continue." << G4endl;
+         << "jana global DApplication object not set, "
+         << "cannot continue." << G4endl;
       exit(-1);
     }
     jana::JCalibration *jcalib = japp->GetJCalibration(run_number);
@@ -65,9 +66,12 @@ GlueXSensitiveDetectorDIRC::GlueXSensitiveDetectorDIRC(const G4String& name)
 
   GlueXUserOptions *user_opts = GlueXUserOptions::GetInstance();
   std::map<int, int> dirclutpars;
-  if (user_opts->Find("DIRCLUT", dirclutpars)){
+  if (user_opts->Find("DIRCLUT", dirclutpars)) {
     fLutId = dirclutpars[1];
-  }else fLutId = 100;
+  }
+  else {
+    fLutId = 100;
+  }
 }
 
     GlueXSensitiveDetectorDIRC::GlueXSensitiveDetectorDIRC(const GlueXSensitiveDetectorDIRC &src)
@@ -78,7 +82,7 @@ GlueXSensitiveDetectorDIRC::GlueXSensitiveDetectorDIRC(const G4String& name)
 }
 
 GlueXSensitiveDetectorDIRC &GlueXSensitiveDetectorDIRC::operator=(const
-								  GlueXSensitiveDetectorDIRC &src)
+                                  GlueXSensitiveDetectorDIRC &src)
 {
   G4AutoLock barrier(&fMutex);
   *(G4VSensitiveDetector*)this = src;
@@ -130,8 +134,10 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
   int itrack = trackinfo->GetGlueXTrackID();
   G4String volname = touch->GetVolume()->GetName();  
   
-  // radiator volume
-  if (volname == "QZBL") {
+  // radiator volume: BNNM (NN = bar number 0-47 and M is sub-bar character A-D)
+  int ibar = 10*((int)volname(1,1)(0)-48)+(int)volname(2,1)(0)-48;   // this is nasty, but it works
+  if (volname(0,1)(0) == 'B' && ibar >= 0 && ibar < 48) { 
+
     if (trackinfo->GetGlueXHistory() == 0 && itrack > 0 && xin.dot(pin) > 0) {
       int pdgtype = track->GetDynamicParticle()->GetPDGcode();
       int g3type = GlueXPrimaryGeneratorAction::ConvertPdgToGeant3(pdgtype);
@@ -146,9 +152,9 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
       barhit.py_GeV = pin[1]/GeV;
       barhit.pz_GeV = pin[2]/GeV;
       barhit.pdg = g3type;
-      barhit.bar = (touch_hist->GetReplicaNumber(0)-1)/4; // each bar is glued from 4 pieces
+      barhit.bar = ibar; // from HDDS geometry
       barhit.track = itrack; // track id of the charged particle
-      fHitsBar.push_back(barhit);      
+      fHitsBar.push_back(barhit);
     }
     return true;
   }
@@ -156,8 +162,9 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
   // wedge and mirrors volumes
   if (volname == "FWM1" || volname == "FWM2" || volname == "FTMR" ||
       volname == "TSM1" || volname == "TSM2" || volname == "TSM3" ||
-      volname == "FSM1" || volname == "FSM2" || volname == "OWDG") {
-
+      volname == "FSM1" || volname == "FSM2" || volname == "OWDG" ||
+      (volname(0,1)(0) == 'A' && volname(0,1)(1) == 'G') )
+  {
 
     GlueXHitDIRCWob wobhit;
     wobhit.track = track->GetTrackID();
@@ -165,91 +172,136 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
     // store normal to the closest boundary
     G4int hNavId = G4ParallelWorldProcess::GetHypNavigatorID();
     std::vector<G4Navigator*>::iterator iNav =
-      G4TransportationManager::GetTransportationManager()->
-      GetActiveNavigatorsIterator();
+      G4TransportationManager::GetTransportationManager()->GetActiveNavigatorsIterator();
 
     G4bool valid;
     G4ThreeVector localNormal = (iNav[hNavId])->GetLocalExitNormal(&valid);
-    if(valid){
+    if (valid){
       int mid=-1;
-      if(volname == "OWDG"){
-	if (localNormal.y()<-0.999) mid=1;
-	else if(localNormal.y()>0.999) mid=2;
-	else if(localNormal.z()>0.999) mid=3;
-	else if(fabs(localNormal.z()+0.86)<0.01) mid=4;
+      if (volname == "OWDG") {
+        if (localNormal.y()<-0.999)
+          mid=1;
+        else if (localNormal.y()>0.999)
+          mid=2;
+        else if(localNormal.z()>0.999)
+          mid=3;
+        else if(fabs(localNormal.z()+0.86)<0.01)
+          mid=4;
       }
-      if(volname == "FSM1") mid = 5;
-      if(volname == "FSM2") mid = 6;
-      if(volname == "FWM1") mid = 7;
-      if(volname == "FWM2") mid = 8;
-      if(volname == "FTMR") mid = 0;
-      if(volname == "TSM1") mid=91;
-      if(volname == "TSM2") mid=92;
-      if(volname == "TSM3") mid=93;
+      if (volname == "FSM1")
+        mid = 5;
+      if (volname == "FSM2")
+        mid = 6;
+      if (volname == "FWM1")
+        mid = 7;
+      if (volname == "FWM2")
+        mid = 8;
+      if (volname == "FTMR")
+        mid = 0;
+      if (volname == "TSM1")
+        mid=91;
+      if (volname == "TSM2")
+        mid=92;
+      if (volname == "TSM3")
+        mid=93;
+      if ((volname(0,1)(0) == 'A' && volname(0,1)(1) == 'G'))
+        mid=100;
 
-      if(mid!=-1){
-	G4double normalId = mid;// localNormal.x() + 10*localNormal.y() + 100*localNormal.z();
-	wobhit.normalId = normalId;
-	fHitsWob.push_back(wobhit);
+      if (mid!=-1) {
+        G4double normalId = mid;// localNormal.x() + 10*localNormal.y() + 100*localNormal.z();
+        wobhit.normalId = normalId;
+        fHitsWob.push_back(wobhit);
       }
     }
-
     return true;
   }
   
   // PMT's pixel volume
-  if (volname == "PIXV"){
-    if ((int)fHitsPmt.size() < MAX_HITS){
+  if (volname == "PIXV") {
+    if ((int)fHitsPmt.size() < MAX_HITS) {
 
-      //fix propagation speed for op
+      // fix propagation speed for op
       double tracklen=track->GetTrackLength()/cm;
       double en=Ein/GeV;
       double refindex= 1.43603+0.0132404*en-0.00225287*en*en+0.000500109*en*en*en;  
       double time_fixed=tracklen/(29.9792458/refindex);
 
+#ifdef DIRC_CHECK_PROPAGATION_TIME
+      double l_QZBL = 9.1 + 0.96 + 122.5; // 2 * (4*122.5) // 2 * bar length + wedge + window
+      double l_EPOTEK = 0.005 + 8 * 0.005; // window+wedge glue + 6 * bar joing glue
+      double l_AIR = 2 * 0.01; // air gap to mirror
+      double l_H2O = tracklen - l_QZBL - l_EPOTEK - l_AIR;
+      
+      // hard coded propagation time for 3.5 eV OpticalPhoton
+      double angle = 45/180*3.14159;
+      double time_propagated = l_QZBL/(29.9792458/1.476)/cos(angle);
+      time_propagated += l_EPOTEK/(29.9792458/1.616)/cos(angle);
+      time_propagated += l_AIR/(29.9792458)/cos(angle);
+      time_propagated += l_H2O/(29.9792458/1.343);
+      G4cout<<"Propagated time = "<<time_propagated<<" and measured time = "<<t/ns<<G4endl;
+#endif
+
       GlueXHitDIRCPmt pmthit;
       pmthit.E_GeV = Ein/GeV;
-      pmthit.t_ns = time_fixed; //t/ns;
+      pmthit.t_ns = t/ns;
+      pmthit.t_fixed_ns = time_fixed;
       pmthit.x_cm = x[0]/cm;
       pmthit.y_cm = x[1]/cm;
       pmthit.z_cm = x[2]/cm;
       
-      double box = touch_hist->GetReplicaNumber(3)-1; // [0,1]
-      double pmt = touch_hist->GetReplicaNumber(1)-1; // [0,107]
-      double pix = touch_hist->GetReplicaNumber(0)-1; // [0,63]
+      double box = touch_hist->GetReplicaNumber(1)-1; // [0,1]
+      double pix = touch_hist->GetReplicaNumber(0)-1; // [0,6911]
 
-      pmthit.ch = (box*108+pmt)*64+pix;
-      pmthit.key_bar = fHitsBar.size()-1;
+      pmthit.ch = box*MAX_PIXELS + pix;
+
+      pmthit.key_bar = -999;
+      for (unsigned int i=0;i<fHitsBar.size();i++){ // get bar hit from parent track
+        if (fHitsBar[i].track == track->GetParentID()) {
+          pmthit.key_bar = fHitsBar[i].bar;
+        }
+      }    
+      pmthit.track = track->GetParentID();
 
       int64_t pathId1 = 0;
       int64_t pathId2 = 0;
       int mid, refl=0;
-      for (unsigned int i=0;i<fHitsWob.size();i++){
-	if(fHitsWob[i].track == track->GetTrackID()) {
-	  refl++;
-	  mid =fHitsWob[i].normalId;
-	  if(refl <= 18){
-	    if(mid<10) pathId1 = pathId1*10 + mid;
-	    else  pathId1 = pathId1*100 + mid;
-	  }else if(refl > 18 && refl < 26){
-	    if(mid<10) pathId2 = pathId2*10 + mid;
-	    else  pathId2 = pathId2*100 + mid;
-	  }
-	}
+      pmthit.bbrefl = false;
+      for (unsigned int i=0;i<fHitsWob.size();i++) {
+        if (fHitsWob[i].track == track->GetTrackID()) {
+          mid =fHitsWob[i].normalId;
+          if (mid>=100) {
+            pmthit.bbrefl = true;
+            continue;
+          }
+          refl++;
+          if (refl <= 18) {
+            if (mid<10)
+              pathId1 = pathId1*10 + mid;
+            else
+              pathId1 = pathId1*100 + mid;
+          }
+          else if (refl > 18 && refl < 26) {
+            if (mid<10)
+              pathId2 = pathId2*10 + mid;
+            else
+              pathId2 = pathId2*100 + mid;
+          }
+        }
       }
       int64_t pathId=pathId1+pathId2;
-      if(refl>19) pathId *=-1;
+      if (refl>19)
+        pathId *=-1;
       
       pmthit.path = pathId;
       pmthit.refl = refl;
       
-      if(fLutId<48){
-	//G4ThreeVector vmom = track->GetVertexMomentumDirection();
-	pmthit.key_bar = fLutId;
+      if (fLutId<48) {
+        //G4ThreeVector vmom = track->GetVertexMomentumDirection();
+        pmthit.key_bar = fLutId;
       }
-      G4cout<<"SIZE HITS = "<< fHitsPmt.size()<<G4endl;
       fHitsPmt.push_back(pmthit);
-    }else{
+    }
+    else {
       G4cerr << "GlueXSensitiveDetectorDIRC::ProcessHits error: "
              << "max hit count " << MAX_HITS << " exceeded, truncating!"
              << G4endl;
@@ -260,37 +312,38 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
 
 void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
 {
-  if ((fHitsBar.size() == 0 && !(fLutId<48)) || fHitsPmt.size() == 0 || fHitsWob.size() == 0){
+  if ((fHitsBar.size() == 0 && !(fLutId<48)) || fHitsPmt.size() == 0 || fHitsWob.size() == 0) {
     fHitsBar.clear();
     fHitsPmt.clear();
     fHitsWob.clear();
     return;
   }
   
-  if (verboseLevel > 1) {
+  if (verboseLevel > 1) { 
     G4cout << G4endl
-	   << "--------> Hits Collection: in this event there are "
-	   << fHitsBar.size() << " bar hits:"
-	   << G4endl;
+       << "--------> Hits Collection: in this event there are "
+       << fHitsBar.size() << " bar hits:"
+       << G4endl;
     for(unsigned int h=0; h<fHitsBar.size(); h++)
       fHitsBar[h].Print();
     
     G4cout << G4endl
-	   << "--------> Hits Collection: in this event there are "
-	   << fHitsPmt.size() << " PMT hits: "
-	   << G4endl;
+       << "--------> Hits Collection: in this event there are "
+       << fHitsPmt.size() << " PMT hits: "
+       << G4endl;
     for(unsigned int h=0; h<fHitsPmt.size(); h++)
       fHitsPmt[h].Print();
   }
 
   // pack hits into ouptut hddm record
+ 
   G4EventManager* mgr = G4EventManager::GetEventManager();
   G4VUserEventInformation* info = mgr->GetUserInformation();
   hddm_s::HDDM *record = ((GlueXUserEventInformation*)info)->getOutputRecord();
   if (record == 0) {
     G4cerr << "GlueXSensitiveDetectorDIRC::EndOfEvent error - "
-	   << "hits seen but no output hddm record to save them into, "
-	   << "cannot continue!" << G4endl;
+           << "hits seen but no output hddm record to save them into, "
+       << "cannot continue!" << G4endl;
     exit(1);
   }
 
@@ -326,8 +379,13 @@ void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
     mhit(0).setZ(fHitsPmt[h].z_cm);
     mhit(0).setCh(fHitsPmt[h].ch);
     mhit(0).setKey_bar(fHitsPmt[h].key_bar);
-    mhit(0).setPath(fHitsPmt[h].path);
-    mhit(0).setRefl(fHitsPmt[h].refl);
+#if DIRCTRUTHEXTRA
+    hddm_s::DircTruthPmtHitExtraList mhitextra = mhit(0).addDircTruthPmtHitExtras(1);
+    mhitextra(0).setT_fixed(fHitsPmt[h].t_fixed_ns);
+    mhitextra(0).setPath(fHitsPmt[h].path);
+    mhitextra(0).setRefl(fHitsPmt[h].refl);
+    mhitextra(0).setBbrefl(fHitsPmt[h].bbrefl);
+#endif
   }
 
   fHitsBar.clear();
@@ -365,7 +423,6 @@ double GlueXSensitiveDetectorDIRC::GetDetectionEfficiency(double energy)
    if (fDetEff == 0)
       InitializeDetEff();
    double wavelength = CLHEP::hbarc * CLHEP::twopi / energy;
-				    
    return fDetEff->Eval(wavelength / nm);
 }
 
