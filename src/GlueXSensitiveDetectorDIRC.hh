@@ -16,7 +16,6 @@
 #include "G4VSensitiveDetector.hh"
 #include "G4AutoLock.hh"
 
-#include "GlueXHitDIRCflash.hh"
 #include "GlueXHitDIRCPmt.hh"
 #include "GlueXHitDIRCBar.hh"
 #include "GlueXHitDIRCWob.hh"
@@ -48,6 +47,7 @@ class GlueXSensitiveDetectorDIRC : public G4VSensitiveDetector
   std::vector<GlueXHitDIRCPmt> fHitsPmt;
   int fLutId;
   bool fLED;
+  static float fEFFIC_SCALE;
   
   std::map<G4LogicalVolume*, int> fVolumeTable;
   
@@ -61,6 +61,7 @@ class GlueXSensitiveDetectorDIRC : public G4VSensitiveDetector
 
   static TGraph *fDetEff;
   static void InitializeDetEff();
+  static bool PixelSort(GlueXHitDIRCPmt hit1, GlueXHitDIRCPmt hit2);
 };
 
 #endif

@@ -27,7 +27,7 @@
 #define OPTICAL_PHOTON 50
 
 // Cutoff on the total number of allowed hits
-int GlueXSensitiveDetectorDIRC::MAX_HITS = 1000;
+int GlueXSensitiveDetectorDIRC::MAX_HITS = 5000;
 int GlueXSensitiveDetectorDIRC::MAX_PIXELS = 6912;
 
 // Minimum hit time difference for two hits on the same tube
@@ -37,6 +37,7 @@ int GlueXSensitiveDetectorDIRC::instanceCount = 0;
 G4Mutex GlueXSensitiveDetectorDIRC::fMutex = G4MUTEX_INITIALIZER;
 
 TGraph *GlueXSensitiveDetectorDIRC::fDetEff = 0;
+float GlueXSensitiveDetectorDIRC::fEFFIC_SCALE = 0;
 
 GlueXSensitiveDetectorDIRC::GlueXSensitiveDetectorDIRC(const G4String& name)
   : G4VSensitiveDetector(name)
@@ -58,10 +59,11 @@ GlueXSensitiveDetectorDIRC::GlueXSensitiveDetectorDIRC(const G4String& name)
       exit(-1);
     }
     jana::JCalibration *jcalib = japp->GetJCalibration(run_number);
-    if (japp == 0) {   // dummy
-      jcalib = 0;
-      G4cout << "DIRC: ALL parameters loaded from ccdb" << G4endl;
-    }
+    std::map<string, float> mc_parms;
+    jcalib->Get("DIRC/mc_parms", mc_parms);
+    fEFFIC_SCALE = mc_parms.at("PAR0");
+
+    G4cout << "DIRC: ALL parameters loaded from ccdb" << G4endl;
   }
 
   GlueXUserOptions *user_opts = GlueXUserOptions::GetInstance();
@@ -386,6 +388,7 @@ void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
   }
 
   // Collect and output the DircTruthPmtHit
+  sort(fHitsPmt.begin(), fHitsPmt.end(), PixelSort);
   for(unsigned int h=0; h<fHitsPmt.size(); h++){
     hddm_s::DircTruthPmtHitList mhit = dirc.addDircTruthPmtHits(1);
     mhit(0).setE(fHitsPmt[h].E_GeV);
@@ -651,6 +654,11 @@ void GlueXSensitiveDetectorDIRC::InitializeDetEff()
    double fLambda[1000];
    for (Int_t i=0; i < 1000; i++) {
       fLambda[i] = i;
+      fEfficiency[i] = fEFFIC_SCALE*fEfficiency[i];
    }
    fDetEff = new TGraph(1000, fLambda, fEfficiency);
+}
+
+bool GlueXSensitiveDetectorDIRC::PixelSort(GlueXHitDIRCPmt hit1, GlueXHitDIRCPmt hit2) {
+	return (hit1.ch < hit2.ch);
 }
