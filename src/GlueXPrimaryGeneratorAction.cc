@@ -765,11 +765,12 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
       double PreRot_y = DIRC_LUT_Y[dirclutpars[1]];
       double PreRot_z = DIRC_LUT_Z[dirclutpars[1]];
 
+/*
       double DIRC_QZBL_DY = BXXA_boxY[dirclutpars[1]] * cm;
       double DIRC_QZBL_DZ = BXXA_boxZ[dirclutpars[1]] * cm;
       PreRot_y += DIRC_QZBL_DY * (0.5 - G4UniformRand()) ;
       PreRot_z += DIRC_QZBL_DZ * (0.5 - G4UniformRand()) ;
-
+*/
       G4ThreeVector vec_to_rot;
       vec_to_rot.setX(PreRot_x-RefInHall.getX()); 
       vec_to_rot.setY(PreRot_y-RefInHall.getY()); 
