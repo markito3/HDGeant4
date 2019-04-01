@@ -5,7 +5,7 @@
 void drawHP(TString infile="drc.root"){
   if(!glx_initc(infile,1,"data/drawHP")) return;
     
-  for(int e=0; e<glx_ch->GetEntries()&& e<200; e++){
+  for(int e=0; e<glx_ch->GetEntries(); e++){
     glx_ch->GetEntry(e);
     for(int t=0; t<glx_events->GetEntriesFast(); t++){
       glx_nextEventc(e,t,100);
