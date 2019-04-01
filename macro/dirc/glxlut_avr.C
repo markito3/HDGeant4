@@ -6,9 +6,7 @@
 #include <TCanvas.h>
 #include <TH1F.h>
 
-
-#include "../../../../sim-recon/master/src/plugins/Analysis/lut_dirc/DrcLutNode.h"
-
+#include "../../../halld_recon/src/plugins/Analysis/lut_dirc/DrcLutNode.h"
 
 void glxlut_avr(TString baseFile = "lut.root"){
   gInterpreter->GenerateDictionary("vector<TVector3>","TVector3.h"); 
@@ -32,7 +30,7 @@ void glxlut_avr(TString baseFile = "lut.root"){
 
   TTree *fTreeNew = new TTree("lut_dirc","Look-up table for DIRC. Averaged");
 
-  Int_t Nnodes = 30000;
+  Int_t Nnodes = 108*64;
   for(Int_t l=0; l<48; l++){
     fLutNew[l] = new TClonesArray("DrcLutNode");
     fTreeNew->Branch(Form("LUT_%d",l),&fLutNew[l],256000,-1);

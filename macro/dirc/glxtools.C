@@ -76,6 +76,8 @@ Int_t map_pmt[glx_maxch];
 Int_t map_pix[glx_maxch];
 Int_t map_row[glx_maxch];
 Int_t map_col[glx_maxch];
+Int_t map_ssp_slot[glx_maxch];
+Int_t map_ssp_fiber[glx_maxch];
 Double_t glx_particleArray[3000];
 
 void glx_createMap(){
@@ -85,12 +87,30 @@ void glx_createMap(){
     Int_t col = pix/2 - 8*(pix/16);
     Int_t row = pix%2 + 2*(pix/16);
     pix = col+8*row;
+    int slot = 4;
+    int br= pmt%18;
+    if(pmt>53) br+=18;
 
+    if((br>8 && br<18) || br>21) slot=5;
+    
+    if(br<4) br=12+br%4;
+    else if(br<8) br=20+br%4;
+    else if(br<12) br=4+br%4;
+    else if(br<16) br=12+br%4;
+    else if(br<18) br=20+br%4;
+    else if(br<22) br=16+(br-2)%4;
+    else if(br<26) br=(br-2)%4;
+    else if(br<30) br=8+(br-2)%4;
+    else if(br<34) br=16+(br-2)%4;
+    else if(br<36) br=22+(br-2)%4;
+      
     map_mpc[pmt][pix]=ch;
     map_pmt[ch] = pmt;
     map_pix[ch] = pix;
     map_row[ch] = row;
     map_col[ch] = col;
+    map_ssp_slot[ch] = slot;
+    map_ssp_fiber[ch] = br;
   } 
 
   for(Int_t i=0; i<5; i++){
@@ -107,7 +127,7 @@ Int_t glx_getChNum(Int_t npmt, Int_t npix){
 TPaletteAxis * glx_palette;
 
 TString glx_drawDigi(TString digidata="", Int_t layoutId = 0, Double_t maxz = 0, Double_t minz = 0){
-  if(!glx_cdigi) glx_cdigi = new TCanvas("glx_cdigi","glx_cdigi",1200,480);//800,350);
+  if(!glx_cdigi) glx_cdigi = new TCanvas("glx_cdigi","glx_cdigi",800,350); //1200,480);
   glx_cdigi->cd();
   if(!glx_hpglobal){
     glx_hpglobal = new TPad("P","T",0.005,0.06,0.95,0.94);
@@ -124,11 +144,11 @@ TString glx_drawDigi(TString digidata="", Int_t layoutId = 0, Double_t maxz = 0,
     if(!glx_hpads[0]){
       for(int i=0; i<ncol; i++){
 	for(int j=0; j<nrow;j++){
-	  //glx_hpads[padi] =  new TPad(Form("P%d_%d",i,j),"T", i/(Double_t)ncol+bw, j/(Double_t)nrow+bh, (i+1)/(Double_t)ncol-bw, (j+1)/(Double_t)nrow-bh, 21);
 	  glx_hpads[padi] =  new TPad(Form("P%d",padi),"T", i/(Double_t)ncol+bw, 1-(j/(Double_t)nrow+bh), (i+1)/(Double_t)ncol-bw, 1-((j+1)/(Double_t)nrow-bh), 21);
-	  glx_hpads[padi]->SetFillColor(kCyan-8);
+	  // glx_hpads[padi]->SetFillColor(kCyan-8);
+	  glx_hpads[padi]->SetFillColor(kCyan-10);
 	  glx_hpads[padi]->SetMargin(0.04,0.04,0.04,0.04);
-	  //if((j+1)%6 != 0)
+	  // if((j+1)%6 != 0)
 	  glx_hpads[padi]->Draw();
 	  padi++;	   
 	}
@@ -407,7 +427,10 @@ void glx_setRootPalette(Int_t pal = 0){
 
 #ifdef glx__sim
 bool glx_init(TString inFile="../build/hits.root", Int_t bdigi=0, TString savepath=""){
-  if(inFile=="") return false;
+  if(inFile==""){
+    std::cout<<"glxtools: no input file "<<std::endl;    
+    return false;
+  }
   if(savepath!="") glx_savepath=savepath;
   glx_setRootPalette(1);
   delete glx_ch;
@@ -712,12 +735,12 @@ void glx_save(TPad *c= NULL,TString path="", TString name="", Int_t what=0, Int_
       cc->Print(path+"/"+name+".png");
       if(what==0) cc->Print(path+"/"+name+".pdf");
       if(what==0) cc->Print(path+"/"+name+".eps");
-      if(what==0) cc->Print(path+"/"+name+".root");
+      if(what==0) cc->Print(path+"/"+name+".C");
     }else{
       c->Print(path+"/"+name+".png");
       if(what==0) c->Print(path+"/"+name+".pdf");
       if(what==0) c->Print(path+"/"+name+".eps");
-      if(what==0) c->Print(path+"/"+name+".root");
+      if(what==0) c->Print(path+"/"+name+".C");
     }
     gROOT->SetBatch(bstate);
   }
