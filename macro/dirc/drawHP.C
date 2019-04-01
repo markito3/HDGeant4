@@ -37,5 +37,5 @@ void drawHP(TString infile="drc.root"){
   glx_drawDigi("",0);
   glx_canvasAdd(glx_cdigi);
   glx_cdigi->SetName(TString("cdigi_")+infile);
-  glx_canvasSave(1,0);
+  // glx_canvasSave(1,0);
 }
