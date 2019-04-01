@@ -21,18 +21,16 @@ void drawHP(TString infile="drc.root"){
     	int pix = hit.GetPixelId();
     	double time = hit.GetLeadTime();	
 
-	//if(time>70) continue;
-  	if(pmt<108) glx_hdigi[pmt]->Fill(pix%8, pix/8,1/(double)glx_ch->GetEntries());
-  	//if(pmt<108) glx_hdigi[pmt]->Fill(pix%8, pix/8);
+  	if(pmt<108) glx_hdigi[pmt]->Fill(pix%8, pix/8);
       }
 
-      if(glx_event->GetHitSize()>5){
-      	glx_drawDigi("",0,1,0);
-      	glx_canvasAdd(glx_cdigi);
-      	glx_cdigi->SetName(Form("evt_cdigi_%d",e)+infile);    
-      	glx_canvasSave(0);
-      	glx_resetDigi();
-      }
+      // if(glx_event->GetHitSize()>5){
+      // 	glx_drawDigi("",0,1,0);
+      // 	glx_canvasAdd(glx_cdigi);
+      // 	glx_cdigi->SetName(Form("evt_cdigi_%d",e)+infile);    
+      // 	glx_canvasSave(0);
+      // 	glx_resetDigi();
+      // }
     }
   }
   
