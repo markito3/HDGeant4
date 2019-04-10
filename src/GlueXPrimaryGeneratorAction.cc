@@ -155,7 +155,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 	       BXXA_boxY[i] = BXXA_boxXYZ_loc[1];
 	       BXXA_boxZ[i] = BXXA_boxXYZ_loc[2];
 
-               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML10_XYZ[0] - DCBR_XYZ[0] - 0.   - BXXA_posXYZ[0] - BXXA_boxXYZ_loc[0]/2.) * cm - 0.0025;
+               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML10_XYZ[0] - DCBR_XYZ[0] - 0.   - BXXA_posXYZ[0] - BXXA_boxXYZ_loc[0]/2.) * cm + 0.25;
                DIRC_LUT_Y[i] = (DIRC[1] + DRCC[1] + DCML10_XYZ[1] - DCBR_XYZ[1] + 1.75 - BXXA_boxXYZ_loc[1]/2.) * cm;
                DIRC_LUT_Z[i] = (DIRC[2] + DRCC[2] + DCML10_XYZ[2] + DCBR_XYZ[2] + 1.7  - BXXA_boxXYZ_loc[2]/2.) * cm;
 
@@ -179,7 +179,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 	       BXXA_boxY[i] = BXXA_boxXYZ_loc[1];
 	       BXXA_boxZ[i] = BXXA_boxXYZ_loc[2];
 
-               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML11_XYZ[0] - DCBR_XYZ[0] - 0.   - BXXA_posXYZ[0] - BXXA_boxXYZ_loc[0]/2.) * cm - 0.0025;
+               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML11_XYZ[0] - DCBR_XYZ[0] - 0.   - BXXA_posXYZ[0] - BXXA_boxXYZ_loc[0]/2.) * cm + 0.25;
                DIRC_LUT_Y[i] = (DIRC[1] + DRCC[1] + DCML11_XYZ[1] - DCBR_XYZ[1] + 1.75 - BXXA_boxXYZ_loc[1]/2.) * cm;
                DIRC_LUT_Z[i] = (DIRC[2] + DRCC[2] + DCML11_XYZ[2] + DCBR_XYZ[2] + 1.7  - BXXA_boxXYZ_loc[2]/2.) * cm;
 
@@ -203,7 +203,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 	       BXXA_boxY[i] = BXXA_boxXYZ_loc[1];
 	       BXXA_boxZ[i] = BXXA_boxXYZ_loc[2];
 
-               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML01_XYZ[0] + DCBR_XYZ[0] + 0.   + BXXA_posXYZ[0] + BXXA_boxXYZ_loc[0]/2.) * cm;
+               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML01_XYZ[0] + DCBR_XYZ[0] + 0.   + BXXA_posXYZ[0] + BXXA_boxXYZ_loc[0]/2.) * cm - 0.25;
                DIRC_LUT_Y[i] = (DIRC[1] + DRCC[1] + DCML01_XYZ[1] + DCBR_XYZ[1] - 1.75 + BXXA_boxXYZ_loc[1]/2.) * cm;
                DIRC_LUT_Z[i] = (DIRC[2] + DRCC[2] + DCML01_XYZ[2] + DCBR_XYZ[2] + 1.7  - BXXA_boxXYZ_loc[2]/2.) * cm;
 
@@ -227,7 +227,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
 	       BXXA_boxY[i] = BXXA_boxXYZ_loc[1];
 	       BXXA_boxZ[i] = BXXA_boxXYZ_loc[2];
 
-               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML00_XYZ[0] + DCBR_XYZ[0] + 0.   + BXXA_posXYZ[0] + BXXA_boxXYZ_loc[0]/2.) * cm;
+               DIRC_LUT_X[i] = (DIRC[0] + DRCC[0] + DCML00_XYZ[0] + DCBR_XYZ[0] + 0.   + BXXA_posXYZ[0] + BXXA_boxXYZ_loc[0]/2.) * cm - 0.25;
                DIRC_LUT_Y[i] = (DIRC[1] + DRCC[1] + DCML00_XYZ[1] + DCBR_XYZ[1] - 1.75 + BXXA_boxXYZ_loc[1]/2.) * cm;
                DIRC_LUT_Z[i] = (DIRC[2] + DRCC[2] + DCML00_XYZ[2] + DCBR_XYZ[2] + 1.7  - BXXA_boxXYZ_loc[2]/2.) * cm;
 
@@ -535,6 +535,9 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
       double colDiam = ((beampars[5] > 0)? beampars[5] : 0.0034) * m;
       double beamEmit = ((beampars[6] > 0)? beampars[6] : 2.5e-9) * m;
       double radThick = ((beampars[7] > 0)? beampars[7] : 20e-6) * m;
+      double spotRMS = ((beampars[8] > 0)? beampars[8] : 5e-4) * m;
+      double spotX = ((beampars[9] != 0)? beampars[9] : 0) * m;
+      double spotY = ((beampars[10] != 0)? beampars[10] : 0) * m;
 
       if (beamE0 == 0) {
          G4cerr << "GlueXPrimaryGeneratorAction error: "
@@ -557,7 +560,9 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
       fCobremsGeneration->setCollimatorDiameter(colDiam/m);
       fCobremsGeneration->setBeamEmittance(beamEmit/(m*radian));
       fCobremsGeneration->setTargetThickness(radThick/m);
+      fCobremsGeneration->setCollimatorSpotrms(spotRMS/m);
       fPhotonBeamGenerator = new GlueXPhotonBeamGenerator(fCobremsGeneration);
+      fPhotonBeamGenerator->setBeamOffset(spotX, spotY);
 
       std::map<int, double> bgratepars;
       std::map<int, double> bggatepars;
@@ -765,12 +770,19 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
       double PreRot_y = DIRC_LUT_Y[dirclutpars[1]];
       double PreRot_z = DIRC_LUT_Z[dirclutpars[1]];
 
-/*
+      std::map<int,int> dirclutspread; 
+      bool locSpread = 0;
+      if (user_opts->Find("DIRCLUTSPREAD", dirclutspread))
+      	locSpread = dirclutspread[1];
+
       double DIRC_QZBL_DY = BXXA_boxY[dirclutpars[1]] * cm;
       double DIRC_QZBL_DZ = BXXA_boxZ[dirclutpars[1]] * cm;
-      PreRot_y += DIRC_QZBL_DY * (0.5 - G4UniformRand()) ;
-      PreRot_z += DIRC_QZBL_DZ * (0.5 - G4UniformRand()) ;
-*/
+      if (locSpread)
+      {
+      	PreRot_y += DIRC_QZBL_DY * (0.5 - G4UniformRand()) ;
+      	PreRot_z += DIRC_QZBL_DZ * (0.5 - G4UniformRand()) ;
+      }
+
       G4ThreeVector vec_to_rot;
       vec_to_rot.setX(PreRot_x-RefInHall.getX()); 
       vec_to_rot.setY(PreRot_y-RefInHall.getY()); 
@@ -778,6 +790,8 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
 
       vec_to_rot.rotateX(rot_factor*DCML_rot[0]*degree);
       vec_to_rot.rotateY(rot_factor*DCML_rot[1]*degree);
+      vec_to_rot.rotateZ((DCML_rot[2]-180.)*degree);
+
 
       G4ThreeVector final_pos = vec_to_rot + RefInHall;
 
@@ -794,6 +808,7 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
 
       vec.rotateX(rot_factor*DCML_rot[0]*degree);
       vec.rotateY(rot_factor*DCML_rot[1]*degree);
+      vec.rotateZ((DCML_rot[2]-180.)*degree);
 
       thetap = vec.theta();
       phip = vec.phi();
