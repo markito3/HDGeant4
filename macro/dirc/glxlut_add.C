@@ -4,14 +4,15 @@
 #include <TInterpreter.h>
 #include <TClonesArray.h>
 
-#include "../../../../sim-recon/master/src/plugins/Analysis/lut_dirc/DrcLutNode.h"
+#include "../../../halld_recon/src/plugins/Analysis/lut_dirc/DrcLutNode.h"
 
 TClonesArray *fLutSum[48];
 
 
 void adddirs(TString filename){
   TFile* f = new TFile(filename);
-  TTree *t=(TTree *) f->Get("lut_dirc") ;
+  TTree *t=(TTree *) f->Get("lut_dirc");
+  
   TClonesArray* fLut[48];
   for(int l=0; l<48; l++){
     fLut[l] = new TClonesArray("DrcLutNode");
@@ -42,7 +43,7 @@ void glxlut_add(TString inFile = "lut_*_avr.root", TString outFile = "lut_all_av
     fTreeNew->Branch(Form("LUT_%d",l),&fLutSum[l],256000,0); 
   }
 
-  int Nnodes = 30000;
+  int Nnodes = 108*64;
   for(int l=0; l<48; l++){
     TClonesArray &fLutaSum = *fLutSum[l];
     for (int n=0; n<Nnodes; n++) {
