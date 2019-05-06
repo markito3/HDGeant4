@@ -1,11 +1,12 @@
 #define glx__sim
-#include "../../../halld_recon/src/plugins/Analysis/pid_dirc/DrcEvent.h"
-#include "../../../halld_recon/src/plugins/Analysis/lut_dirc/DrcLutNode.h"
+//#include "../../../../halld_recon/master/src/plugins/Analysis/pid_dirc/DrcEvent.h"
+#include "DrcEvent.h"
+#include "../../../../halld_recon/master/src/plugins/Analysis/lut_dirc/DrcLutNode.h"
 #include "glxtools.C"
 
 void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lut_all_avr.root",int xbar=-1, int ybar=-1, double moms=4){
 
-  if(!glx_initc(infile,1,"data/reco_lut_tt_sim")) return;
+  if(!glx_initc(infile,1,"data/reco_lut_c")) return;
   const int nodes = glx_maxch;
   const int luts = 24;
   
@@ -27,12 +28,12 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
   TVector3 fnX1 = TVector3 (1,0,0);   
   TVector3 fnY1 = TVector3( 0,1,0);
   TVector3 fnZ1 = TVector3( 0,0,1);
-  double radiatorL = 489.712; //4*122.5;
-  double barend = -294.022; // 4*1225-1960; -294.022
+  double radiatorL = 489.712; // 4*122.5;
+  double barend = -294.022;   // 4*1225-1960; -294.022
 
   double minChangle = 0.6;
   double maxChangle = 0.9;
-  double sum1,sum2,noise = 0.5;
+  double sum1,sum2,noise = 0.4;
   double criticalAngle = asin(1.00028/1.47125); // n_quarzt = 1.47125; //(1.47125 <==> 390nm)
   double evtime,luttheta,tangle,lenz;
   int64_t pathid;
@@ -42,24 +43,25 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
   TF1 *fit = new TF1("fgaus","[0]*exp(-0.5*((x-[1])/[2])*(x-[1])/[2]) +x*[3]+[4]",minChangle,maxChangle);
   TSpectrum *spect = new TSpectrum(10);   
   TH1F *hAngle[5], *hLnDiff[5], *hNph[5];
+  TH1F *hAngleU[5];
   TF1  *fAngle[5];
   double mAngle[5];
   TH1F *hDiff = new TH1F("hDiff",";t_{calc}-t_{measured} [ns];entries [#]", 400,-40,40);
   TH1F *hDiffT = new TH1F("hDiffT",";t_{calc}-t_{measured} [ns];entries [#]", 400,-40,40);
   TH1F *hDiffD = new TH1F("hDiffD",";t_{calc}-t_{measured} [ns];entries [#]", 400,-40,40);
   TH1F *hDiffR = new TH1F("hDiffR",";t_{calc}-t_{measured} [ns];entries [#]", 400,-40,40);
-  TH1F *hTime = new TH1F("hTime",";propagation time [ns];entries [#]",   1000,0,200);
-  TH1F *hCalc = new TH1F("hCalc",";calculated time [ns];entries [#]",   1000,0,200);
-  TH1F *hNphC = new TH1F("hNphC",";detected photons [#];entries [#]", 150,0,150);
+  TH1F *hTime = new TH1F("hTime",";propagation time [ns];entries [#]", 1000,0,200);
+  TH1F *hCalc = new TH1F("hCalc",";calculated time [ns];entries [#]",  1000,0,200);
+  TH1F *hNphC = new TH1F("hNphC",";detected photons [#];entries [#]",  150,0,150);
   hDiff->SetMinimum(0);
-
   
   TGaxis::SetMaxDigits(3);
   
-  double sigma[]={0.01,0.01,0.01,0.010,0.01,0.01};
+  double sigma[]={0.01,0.01,0.0085,0.009,0.01,0.01};
   for(int i=0; i<5; i++){
     double momentum=4;
-    hAngle[i]= new TH1F(Form("hAngle_%d",i),  "cherenkov angle;#theta_{C} [rad];entries/N_{max} [#]", 250,0.6,1);
+    hAngle[i]= new TH1F(Form("hAngle_%d",i),  "cherenkov angle;#theta_{C} [rad];entries/N_{max} [#]", 1250,0.6,3);
+    hAngleU[i]= new TH1F(Form("hAngleu_%d",i),  "cherenkov angle;#theta_{C} [rad];entries/N_{max} [#]", 1250,0.6,3);
     hNph[i] = new TH1F(Form("hNph_%d",i),";detected photons [#];entries [#]", 150,0,150);
     mAngle[i] = acos(sqrt(momentum * momentum + glx_mass[i]*glx_mass[i])/momentum/1.473);  //1.4738
     fAngle[i] = new TF1(Form("fAngle_%d",i),"[0]*exp(-0.5*((x-[1])/[2])*(x-[1])/[2])",0.7,0.9);
@@ -70,6 +72,14 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
     hAngle[i]->SetMarkerSize(0.8);
     hLnDiff[i] = new TH1F(Form("hLnDiff_%d",i),";ln L(#pi) - ln L(K);entries [#]",120,-60,60);
   }
+
+  // fAngle[2]->SetParameter(0,6.51118e-01);       
+  // fAngle[2]->SetParameter(3,8.83600e-01);
+  // fAngle[2]->SetParameter(4,-3.74991e-01);
+  // fAngle[3]->SetParameter(0,5.32805e-01);       
+  // fAngle[3]->SetParameter(3,1.24571e+00);
+  // fAngle[3]->SetParameter(4,-5.58594e-01);
+
   
   hAngle[2]->SetLineColor(4);
   hAngle[3]->SetLineColor(2);
@@ -85,9 +95,12 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
   TLine *gLine = new TLine();
   // cuts
   double cut_cangle=0.02;
-  double cut_tdiffd=4;//3;
-  double cut_tdiffr=4;//3.5;
+  double cut_tdiffd=3;//3;
+  double cut_tdiffr=3.5;//3.5;
 
+  TH1F *hphi = new TH1F("hphi","hphi;[GeV/c];events [#]",5000,0,1.5);
+  TH1F *hrho = new TH1F("hrho","hphi;[GeV/c];events [#]",5000,0,1.5);
+  
   const int nbins=20;
   DrcHit hit;
   for (int e = 0; e < glx_ch->GetEntries(); e++){
@@ -95,24 +108,38 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
     
     for (int t = 0; t < glx_events->GetEntriesFast(); t++){      
       glx_nextEventc(e,t,1000);
+
+      if (fabs(glx_event->GetPdg())==321){
+	if(abs(glx_event->GetInvMass()-1.02)>0.1 || glx_event->GetChiSq()>20 ) continue;
+      }else if (fabs(glx_event->GetPdg())==211){
+      	if(abs(glx_event->GetInvMass()-0.77)>0.04 || glx_event->GetChiSq()>5 ) continue;
+      }else continue;
+
+      if(glx_event->GetPdg()==321) hphi->Fill(glx_event->GetInvMass());
+      if(glx_event->GetPdg()==211) hrho->Fill(glx_event->GetInvMass());          
+
       posInBar = glx_event->GetPosition();
       momInBar = glx_event->GetMomentum();
       double momentum = momInBar.Mag();
       int pdgId = glx_findPdgId(glx_event->GetPdg());
       int bar = glx_event->GetId();
-      //if(count[pdgId]>1000) continue;	
+      //if(count[pdgId]>1000) continue;
       
       // selection
       if(glx_event->GetType()!=2) continue; //1-LED 2-beam 0-rest
-      if(momInBar.Mag()<3.9 || momInBar.Mag()>4.15 ) continue;
+      if(momInBar.Mag()<3.8 || momInBar.Mag()>4.2 ) continue;
       //if(momInBar.Mag()<2.0 || momInBar.Mag()>2.5 ) continue;
+
+      if(fabs(glx_event->GetMissMass())>0.005) continue;
+       // if(glx_event->GetTofTrackDist()>3) continue;
+       // if(glx_event->GetDcHits()<20) continue;
 
       int bin = (100+posInBar.X())/200.*nbins;
       // if(bar<0 || bar>=luts || (bar!=ybar && ybar!=-1)) continue;
       // if(bin<0 || bin>nbins || (bin!=xbar && xbar!=-1)) continue; 
 
-      if(bar<0 || bar>=luts || (bar<3 || bar>3)) continue;
-      if(bin<0 || bin>nbins || (bin<10 || bin>10)) continue; 
+      if(bar<0 || bar>=luts || (bar<5 || bar>8)) continue;
+      if(bin<0 || bin>nbins || (bin<9 || bin>11)) continue; 
 
       // if(bar<0 || bar>=luts) continue;
       // if(bin<0 || bin>nbins) continue; 
@@ -136,23 +163,21 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
     	hit = glx_event->GetHit(h);
 	int ch = hit.GetChannel();		
 	int pmt = hit.GetPmtId();
-    	int pix = hit.GetPixelId();
-	
+    	int pix = hit.GetPixelId();	
     	double hitTime = hit.GetLeadTime()-glx_event->GetTime();
 	
 	if(pmt<=10 || (pmt>=90 && pmt<=96)) continue; // dummy pmts
 	if(ch>glx_nch) continue;
-	//if(hitTime>40) continue;
+	if(hitTime>45) continue;
 	nphc++;
 	
-	bool reflected = hitTime>40;	
+	bool reflected = hitTime>45;	
 	lenz = fabs(barend-posInBar.X());
 	double rlenz = 2*radiatorL - lenz;
 	double dlenz = lenz;	
 	if(reflected) lenz = 2*radiatorL - lenz;
 
 	bool isGood(false);
-
 	double p1,p2;
 	
 	for(int i = 0; i < lutNode[bar][ch]->Entries(); i++){
@@ -180,8 +205,8 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
 	      if(dir.Angle(fnY1) < criticalAngle || dir.Angle(fnZ1) < criticalAngle) continue;
 
 	      luttheta = dir.Angle(TVector3(-1,0,0));
-	      if(luttheta > TMath::PiOver2()) luttheta = TMath::Pi()-luttheta;
-	      tangle = momInBar.Angle(dir);//-0.004; //correction
+	      //if(luttheta > TMath::PiOver2()) luttheta = TMath::Pi()-luttheta;
+	      tangle = momInBar.Angle(dir)-0.001; //correction
 	    
 	      //double bartime = lenz/cos(luttheta)/20.4; //198 //203.767 for 1.47125
 	      //double bartime = lenz/cos(luttheta)/19.8; //198 //203.767 for 1.47125
@@ -189,34 +214,31 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
 	      double totalTime = bartime+evtime;
 	      // hTime->Fill(hitTime);
 	      // hCalc->Fill(totalTime);
+
+	      if(fabs(tangle-0.5*(mAngle[2]+mAngle[3]))>cut_cangle) continue;
+	      // if(tangle<2.5 && tangle>2) continue;
 	      
-	      if(fabs(tangle-0.5*(mAngle[2]+mAngle[3]))<cut_cangle){
-		hDiff->Fill(totalTime-hitTime);
-		//if(samepath)
-		  {
-		  hDiffT->Fill(totalTime-hitTime);
-		  if(r) hDiffR->Fill(totalTime-hitTime);
-		  else hDiffD->Fill(totalTime-hitTime);
-		}
+	      hDiff->Fill(totalTime-hitTime);
+	      //if(samepath)
+	      {
+		hDiffT->Fill(totalTime-hitTime);
+		if(r) hDiffR->Fill(totalTime-hitTime);
+		else hDiffD->Fill(totalTime-hitTime);
 	      }
 	      
 	      if(!r && fabs(totalTime-hitTime)>cut_tdiffd) continue;
 	      if(r && fabs(totalTime-hitTime) >cut_tdiffr) continue;
 
 	      hAngle[pdgId]->Fill(tangle);
-	      if(fabs(tangle-0.5*(mAngle[2]+mAngle[3]))>0.05) continue;
+	      if(pdgId==2) hAngleU[u]->Fill(tangle);
+
 	      isGood=true;	  
 
 	      hTime->Fill(hitTime);
 	      hCalc->Fill(totalTime);
-
-	      //	      std::cout<<pdgId<<" TMath::Log(fAngle[2]->Eval(tangle)+0.001) "<<TMath::Log(fAngle[2]->Eval(tangle)+noise)<<"    "<< TMath::Log(fAngle[3]->Eval(tangle)+noise)<< " "<< tangle<<std::endl;
-
-
 	      
 	      sum1 += TMath::Log(fAngle[2]->Eval(tangle)+noise);
 	      sum2 += TMath::Log(fAngle[3]->Eval(tangle)+noise);
-
 
 	      if(0){
 		TString x=(sum1>sum2)? " <====== PION" : "";
@@ -356,14 +378,14 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
   
   TF1 *ff;
   double sep=0,esep=0, m1=0,m2=0,s1=0,s2=0; 
-  if(hLnDiff[3]->GetEntries()>200){
+  if(hLnDiff[3]->GetEntries()>50){
     hLnDiff[3]->Fit("gaus","S");
     ff = hLnDiff[3]->GetFunction("gaus");
     ff->SetLineColor(1);
     m1=ff->GetParameter(1);
     s1=ff->GetParameter(2);
   }
-  if(hLnDiff[2]->GetEntries()>200){
+  if(hLnDiff[2]->GetEntries()>50){
     hLnDiff[2]->Fit("gaus","S");
     ff = hLnDiff[2]->GetFunction("gaus");
     ff->SetLineColor(1);
@@ -376,6 +398,17 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
   hAngle[2]->GetYaxis()->SetRangeUser(0,1.2);
   hAngle[2]->Draw();
   hAngle[3]->Draw("same");
+
+  hAngleU[0]->SetLineColor(kRed+2);
+  hAngleU[1]->SetLineColor(kYellow+1);
+  hAngleU[2]->SetLineColor(kGreen+1);
+  hAngleU[3]->SetLineColor(kOrange+1);
+
+  for(auto i=0; i<4; i++) {
+    if(hAngleU[i]->GetMaximum()>0) hAngleU[i]->Scale(1/hAngleU[i]->GetMaximum());
+    hAngleU[i]->Draw("same");
+  }
+  
   // fAngle[3]->Draw("same");
   // fAngle[2]->Draw("same");
 
@@ -564,6 +597,11 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
   // fc.Write();
   // fc.Close();
 
-  glx_canvasSave(0);
+  // glx_canvasSave(0);
+  
+  // glx_canvasAdd("hKin"+nid,800,400);
+  // hrho->Draw();
+  // hphi->SetLineColor(kRed);
+  // hphi->Draw("same");
   
 }
