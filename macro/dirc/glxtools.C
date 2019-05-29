@@ -522,7 +522,7 @@ TVector3 glx_fit(TH1F *h, Double_t range = 3, Double_t threshold=20, Double_t li
 
     if(peakSearch == 1){
       glx_gaust->SetParameter(1,xmax);
-      glx_gaust->SetParameter(2,0.2);
+      glx_gaust->SetParameter(2,0.006);
       glx_gaust->SetParLimits(2,0.005,limit);
       h->Fit("glx_gaust",opt,"MQN",xxmin-range, xxmax+range);
     }
@@ -562,7 +562,7 @@ TVector3 glx_fit(TH1F *h, Double_t range = 3, Double_t threshold=20, Double_t li
       glx_gaust->SetParameter(5,0.2);
     }
 
-    h->Fit("glx_gaust",opt,"MQN",xxmin-range, xxmax+range);
+    //h->Fit("glx_gaust",opt,"MQN",xxmin-range, xxmax+range);
     mean1 = glx_gaust->GetParameter(1);
     sigma1 = glx_gaust->GetParameter(2);
     if(sigma1>10) sigma1=10;
@@ -711,6 +711,14 @@ void glx_save(TPad *c= NULL,TString path="", TString name="", Int_t what=0, Int_
 	    
 	    hh->GetXaxis()->SetTitleOffset(0.85);
 	    hh->GetYaxis()->SetTitleOffset(0.76);
+
+	    if(fabs(cc->GetBottomMargin()-0.12)<0.001){
+	      TPaletteAxis *palette = (TPaletteAxis*)hh->GetListOfFunctions()->FindObject("palette");
+	      if(palette) {
+		palette->SetY1NDC(0.12);
+		cc->Modified();
+	      }
+	    }
 	  }
 	  if(obj->InheritsFrom("TGraph")){
 	    TGraph *gg = (TGraph*)obj;

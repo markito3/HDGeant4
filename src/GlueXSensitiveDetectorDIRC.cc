@@ -324,6 +324,8 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
 
 void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
 {
+  std::cout<<"fHitsPmt.size() "<<fHitsPmt.size()<<" "<<fHitsWob.size()<<" " <<fHitsBar.size()<<" "<<fLutId<<std::endl;
+  
   if ((fHitsBar.size() == 0 && !(fLutId<48) && !fLED) || (fHitsBar.size() == 0 && !fLED) || fHitsPmt.size() == 0 || (fHitsWob.size() == 0 && !fLED))
   {
   
@@ -397,6 +399,8 @@ void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
     hddm_s::DircTruthPmtHitExtraList mhitextra = mhit(0).addDircTruthPmtHitExtras(1);
     mhitextra(0).setT_fixed(fHitsPmt[h].t_fixed_ns);
     mhitextra(0).setPath(fHitsPmt[h].path);
+    std::cout<<fHitsPmt.size()<<" =============================== "<<fHitsPmt[h].path<<std::endl;
+    
     mhitextra(0).setRefl(fHitsPmt[h].refl);
     mhitextra(0).setBbrefl(fHitsPmt[h].bbrefl);
 #endif

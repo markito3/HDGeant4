@@ -24,7 +24,7 @@ void adddirs(TString filename){
     for (int inode=0; inode<fLut[l]->GetEntriesFast(); inode++){
       DrcLutNode *node= (DrcLutNode*) fLut[l]->At(inode);
       for(int i=0; i< node->Entries(); i++){
-	((DrcLutNode*)(fLutSum[l]->At(inode)))->AddEntry(node->GetLutId(),node->GetDetectorId(), node->GetEntry(i), node->GetPathId(i), node->GetNRefl(i), node->GetTime(i), node->GetHitPos(i), node->GetDigiPos());
+	((DrcLutNode*)(fLutSum[l]->At(inode)))->AddEntry(node->GetLutId(),node->GetDetectorId(), node->GetEntry(i), node->GetPathId(i), node->GetNRefl(i), node->GetTime(i), node->GetHitPos(i), node->GetDigiPos(),node->GetWeight(i));
       }
       delete node;
     }

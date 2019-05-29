@@ -6,7 +6,8 @@
 #include "TSystemFile.h"
 
 
-void cut_tree(TString infile="/volatile/halld/home/gxproj7/RunPeriod-2019-01/dirc_monitoring/analysis_REST/ver08_pass04/hists",TString out="ver08_pass04_1c.root"){
+// void cut_tree(TString infile="/volatile/halld/home/gxproj7/RunPeriod-2019-01/dirc_monitoring/analysis_REST/ver08_pass04/hists",TString out="ver08_pass04_1c.root"){
+void cut_tree(TString infile="/volatile/halld/home/jrsteven/RunPeriod-2019-01/dirc_monitoring/analysis_REST/ver08_pass05/merged/hd_root_*.root",TString out="ver08_pass05_1c.root"){
   if(!glx_initc(infile,0,"")) return;
 
   if(!infile.EndsWith("root") && !infile.Contains("*")){

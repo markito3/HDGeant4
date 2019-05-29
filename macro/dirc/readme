@@ -24,7 +24,7 @@ hdgeant4 -t1 run.mac
 # with about 100k in run.mac
 
 #create LUT with lut_dirc plugin:
-hd_root -nthreads=10-o lut.root --plugin=lut_dirc out.hddm
+hd_root -nthreads=10 -o lut.root --plugin=lut_dirc out.hddm
 
 #averege LUT directions
 root loadlib.C glxlut_avr.C+'("lut.root")'

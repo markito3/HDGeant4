@@ -117,7 +117,7 @@ GlueXPrimaryGeneratorAction::GlueXPrimaryGeneratorAction()
          jgeom->Get("//composition[@name='DCML11']/posXYZ[@volume='WNGL']/@X_Y_Z", WNGL11_XYZ);
          jgeom->Get("//composition[@name='DCML11']/posXYZ[@volume='WNGL']/@X_Y_Z", WNGL11_XYZ);
          jgeom->Get("//trd[@name='OWDG']/@Xmp_Ymp_Z", OWDG_XYZ);
-         DIRC_LUT_Z = (DIRC[2] + DRCC[2] + DCML01_XYZ[2] + 0.8625) * cm;
+         DIRC_LUT_Z = (DIRC[2] + DRCC[2] + DCML01_XYZ[2] + 0.8625) * cm + 0.55*cm;
          DIRC_QZBL_DY = 3.5 * cm;   // nominal width to generate LUT
          DIRC_QZBL_DZ = 1.725 * cm; // nominal thickness to generate LUT
          DIRC_OWDG_DZ = OWDG_XYZ[4];
@@ -572,7 +572,7 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
 
       // array of bar y-positions for LUT from JGeometry
       double y = 0.; // no shift
-      double x = DIRC_LUT_X[dirclutpars[1]];
+      double x = DIRC_LUT_X[dirclutpars[1]]+1;
       double z = DIRC_LUT_Z;
 
       G4ThreeVector vec(0,0,1);
@@ -587,8 +587,9 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
       }
      
       // spread over end of bar in y and z
-      y += DIRC_QZBL_DY/2.0 - DIRC_QZBL_DY*G4UniformRand();
-      z += DIRC_QZBL_DZ/2.0 - DIRC_QZBL_DZ*G4UniformRand(); 
+      double scale = 0.8;
+      y += scale*DIRC_QZBL_DY/2.0 - scale*DIRC_QZBL_DY*G4UniformRand();
+      z += scale*DIRC_QZBL_DZ/2.0 - scale*DIRC_QZBL_DZ*G4UniformRand(); 
 
       thetap = vec.theta();
       phip = vec.phi();

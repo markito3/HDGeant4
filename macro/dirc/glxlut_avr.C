@@ -40,16 +40,16 @@ void glxlut_avr(TString baseFile = "lut.root"){
     }
   }
 
-  // TCanvas* c = new TCanvas("c","c",0,0,800,1200); c->Divide(2,2);
-  // TH1F * hTime = new TH1F("hTime","Time",5000,0,10);
-  // TH1F * hDirx = new TH1F("hDirx","X component",1000,-1,1);
-  // TH1F * hDiry = new TH1F("hDiry","Y component",1000,-1,1);
-  // TH1F * hDirz = new TH1F("hDirz","Z component",1000,-1,1);
+  //TCanvas* c = new TCanvas("c","c",0,0,800,1200); c->Divide(2,2);
+  TH1F * hTime = new TH1F("hTime","Time",5000,0,10);
+  TH1F * hDirx = new TH1F("hDirx","X component",1000,-1,1);
+  TH1F * hDiry = new TH1F("hDiry","Y component",1000,-1,1);
+  TH1F * hDirz = new TH1F("hDirz","Z component",1000,-1,1);
 
   const int max = 5000;
   std::vector<TVector3> vArray[max];
   std::vector<Double_t> tArray[max];
-  std::vector< Long64_t> pArray;
+  std::vector<Long64_t> pArray;
 
   int nsum;
   TVector3 dir,dir2,osum,sum;
@@ -62,8 +62,9 @@ void glxlut_avr(TString baseFile = "lut.root"){
     for (int inode=0; inode<fLut[l]->GetEntriesFast(); inode++){
       if(inode%1000==0) cout<<"Node # "<<inode << "  L "<<l<<endl;
       node= (DrcLutNode*) fLut[l]->At(inode);
-      int size = node->Entries();    
+      int size = node->Entries();      
       if(size<1) continue;
+      std::cout<<"size "<<size<<std::endl;
       for(int i=0; i<size; i++){
 	dir = node->GetEntry(i);
 	time = node->GetTime(i);
@@ -84,13 +85,13 @@ void glxlut_avr(TString baseFile = "lut.root"){
 	  pArray.push_back(pathid);
 	}
       }
-
+ 
       for(size_t j=0; j<pArray.size(); j++){
 	sum = TVector3(0,0,0);
 	sumt=0;
 	nsum=0;
 	
-	if(vArray[j].size()<5) continue;
+	if(vArray[j].size()<1) continue;
 	
 	osum = TVector3(0,0,0);
 	for(size_t v=0; v<vArray[j].size(); v++) osum += vArray[j][v];
@@ -102,11 +103,11 @@ void glxlut_avr(TString baseFile = "lut.root"){
 	  sumt += tArray[j][v];
 	  nsum++;
 	  
-	  // std::cout<<inode<<" "<<pArray[j]<< " vArray[j][v].Y() "<<vArray[j][v].Y()<<" "<<vArray[j][v].Z()<<std::endl;	  
-	  // hDirx->Fill(vArray[j][v].X());
-	  // hDiry->Fill(vArray[j][v].Y());
-	  // hDirz->Fill(vArray[j][v].Z());
-	  // hTime->Fill(tArray[j][v]);
+	  std::cout<<inode<<" "<<pArray[j]<< " vArray[j][v].Y() "<<vArray[j][v].Y()<<" "<<vArray[j][v].Z()<<std::endl;	 
+	  hDirx->Fill(vArray[j][v].X());
+	  hDiry->Fill(vArray[j][v].Y());
+	  hDirz->Fill(vArray[j][v].Z());
+	  hTime->Fill(tArray[j][v]);
 	}		
 
 	if(nsum<1) continue;
@@ -130,6 +131,7 @@ void glxlut_avr(TString baseFile = "lut.root"){
       
 	((DrcLutNode*)(fLutNew[l]->At(inode)))->AddEntry(node->GetLutId(),node->GetDetectorId(), sum,pArray[j],node->GetNRefl(0),sumt, node->GetDigiPos(),node->GetDigiPos(),nsum/(double)size); 
       }
+      
       for(size_t i=0; i<max; i++) {vArray[i].clear();  tArray[i].clear();}
       pArray.clear();
     }
