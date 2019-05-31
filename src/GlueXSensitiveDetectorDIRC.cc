@@ -146,7 +146,7 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
   int ibar = 10*((int)volname(1,1)(0)-48)+(int)volname(2,1)(0)-48;   // this is nasty, but it works
   if (volname(0,1)(0) == 'B' && ibar >= 0 && ibar < 48) { 
 
-    if (trackinfo->GetGlueXHistory() == 0 && itrack > 0 && xin.dot(pin) > 0) {
+    if (trackinfo->GetGlueXHistory() == 0 && itrack > 0 && (xin.dot(pin) > 0 || fLutId < 48)) {
       int pdgtype = track->GetDynamicParticle()->GetPDGcode();
       int g3type = GlueXPrimaryGeneratorAction::ConvertPdgToGeant3(pdgtype);
       
@@ -166,7 +166,7 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
     }
     return true;
   }
-
+ 
   // wedge and mirrors volumes
 
   if (volname == "WM1N" || volname == "WM2N" || volname == "WM1S" || volname == "WM2S" ||
@@ -318,13 +318,15 @@ G4bool GlueXSensitiveDetectorDIRC::ProcessHits(G4Step* step,
              << "max hit count " << MAX_HITS << " exceeded, truncating!"
              << G4endl;
     }
+
+    // stop further track propagation
+    track->SetTrackStatus(fStopAndKill);
   }
   return true;
 }
 
 void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
 {
-  std::cout<<"fHitsPmt.size() "<<fHitsPmt.size()<<" "<<fHitsWob.size()<<" " <<fHitsBar.size()<<" "<<fLutId<<std::endl;
   
   if ((fHitsBar.size() == 0 && !(fLutId<48) && !fLED) || (fHitsBar.size() == 0 && !fLED) || fHitsPmt.size() == 0 || (fHitsWob.size() == 0 && !fLED))
   {
@@ -399,8 +401,6 @@ void GlueXSensitiveDetectorDIRC::EndOfEvent(G4HCofThisEvent*)
     hddm_s::DircTruthPmtHitExtraList mhitextra = mhit(0).addDircTruthPmtHitExtras(1);
     mhitextra(0).setT_fixed(fHitsPmt[h].t_fixed_ns);
     mhitextra(0).setPath(fHitsPmt[h].path);
-    std::cout<<fHitsPmt.size()<<" =============================== "<<fHitsPmt[h].path<<std::endl;
-    
     mhitextra(0).setRefl(fHitsPmt[h].refl);
     mhitextra(0).setBbrefl(fHitsPmt[h].bbrefl);
 #endif

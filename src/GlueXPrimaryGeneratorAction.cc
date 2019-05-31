@@ -584,21 +584,24 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
       double x = DIRC_LUT_X[dirclutpars[1]]+1;
       double z = DIRC_LUT_Z;
 
-      G4ThreeVector vec(0,0,1);
-      double rand1 = G4UniformRand();
-      double rand2 = G4UniformRand();
-      vec.setTheta(acos(rand1));
-      vec.setPhi(2*M_PI*rand2);
+      double criticalAngle = asin(1.00028/1.47125); // n_quarzt = 1.47125 (390 nm)
+      G4ThreeVector fx(1,0,0),fy(0,1,0),fnx(-1,0,0),fny(0,-1,0),fz(0,0,1), vec(1,0,0);
+      while(vec.angle(fx)<criticalAngle || vec.angle(fy)<criticalAngle ||
+	    vec.angle(fnx)<criticalAngle || vec.angle(fny)<criticalAngle){
+	vec = G4ThreeVector(0,0,1);
+	vec.setTheta(acos(G4UniformRand()));
+	vec.setPhi(2*M_PI*G4UniformRand());
+      }
       vec.rotateY(M_PI/2.);
       y = DIRC_BAR_Y[dirclutpars[1]];
       if (dirclutpars[1] < 24) {
         vec.rotateY(M_PI);
       }
      
-      // spread over end of bar in y and z
-      double scale = 0.8;
-      y += scale*DIRC_QZBL_DY/2.0 - scale*DIRC_QZBL_DY*G4UniformRand();
-      z += scale*DIRC_QZBL_DZ/2.0 - scale*DIRC_QZBL_DZ*G4UniformRand(); 
+      // // spread over end of bar in y and z
+      // double scale = 0.8;
+      // y += scale*DIRC_QZBL_DY/2.0 - scale*DIRC_QZBL_DY*G4UniformRand();
+      // z += scale*DIRC_QZBL_DZ/2.0 - scale*DIRC_QZBL_DZ*G4UniformRand(); 
 
       thetap = vec.theta();
       phip = vec.phi();
