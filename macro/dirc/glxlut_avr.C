@@ -6,7 +6,7 @@
 #include <TCanvas.h>
 #include <TH1F.h>
 
-#include "../../../halld_recon/src/plugins/Analysis/lut_dirc/DrcLutNode.h"
+#include "DrcLutNode.h"
 
 void glxlut_avr(TString baseFile = "lut.root"){
   gInterpreter->GenerateDictionary("vector<TVector3>","TVector3.h"); 
@@ -64,7 +64,7 @@ void glxlut_avr(TString baseFile = "lut.root"){
       node= (DrcLutNode*) fLut[l]->At(inode);
       int size = node->Entries();      
       if(size<1) continue;
-      std::cout<<"size "<<size<<std::endl;
+      // std::cout<<"size "<<size<<std::endl;
       for(int i=0; i<size; i++){
 	dir = node->GetEntry(i);
 	time = node->GetTime(i);
@@ -91,7 +91,7 @@ void glxlut_avr(TString baseFile = "lut.root"){
 	sumt=0;
 	nsum=0;
 	
-	if(vArray[j].size()<1) continue;
+	if(vArray[j].size()<5) continue;
 	
 	osum = TVector3(0,0,0);
 	for(size_t v=0; v<vArray[j].size(); v++) osum += vArray[j][v];
@@ -103,7 +103,7 @@ void glxlut_avr(TString baseFile = "lut.root"){
 	  sumt += tArray[j][v];
 	  nsum++;
 	  
-	  std::cout<<inode<<" "<<pArray[j]<< " vArray[j][v].Y() "<<vArray[j][v].Y()<<" "<<vArray[j][v].Z()<<std::endl;	 
+	  // std::cout<<inode<<" "<<pArray[j]<< " vArray[j][v].Y() "<<vArray[j][v].Y()<<" "<<vArray[j][v].Z()<<std::endl;	 
 	  hDirx->Fill(vArray[j][v].X());
 	  hDiry->Fill(vArray[j][v].Y());
 	  hDirz->Fill(vArray[j][v].Z());

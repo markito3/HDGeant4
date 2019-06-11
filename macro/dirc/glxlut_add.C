@@ -4,7 +4,7 @@
 #include <TInterpreter.h>
 #include <TClonesArray.h>
 
-#include "../../../halld_recon/src/plugins/Analysis/lut_dirc/DrcLutNode.h"
+#include "DrcLutNode.h"
 
 TClonesArray *fLutSum[48];
 
@@ -21,7 +21,7 @@ void adddirs(TString filename){
   t->GetEntry(0);
   std::cout<<filename<<" has "<<fLut[0]->GetEntriesFast()<< " entries" <<std::endl;
   for(size_t l=0; l<48; l++){
-    for (int inode=0; inode<fLut[l]->GetEntriesFast(); inode++){
+    for (int inode=0; inode<108*64; inode++){
       DrcLutNode *node= (DrcLutNode*) fLut[l]->At(inode);
       for(int i=0; i< node->Entries(); i++){
 	((DrcLutNode*)(fLutSum[l]->At(inode)))->AddEntry(node->GetLutId(),node->GetDetectorId(), node->GetEntry(i), node->GetPathId(i), node->GetNRefl(i), node->GetTime(i), node->GetHitPos(i), node->GetDigiPos(),node->GetWeight(i));
@@ -35,7 +35,7 @@ void adddirs(TString filename){
 }
 
 
-void glxlut_add(TString inFile = "lut_*_avr.root", TString outFile = "lut_all_avr.root"){
+void glxlut_add(TString inFile = "lut_*_avr.root", TString outFile = "lut_all.root"){
 
   TTree *fTreeNew = new TTree("lut_dirc","Look-up table for DIRC");
   for(int l=0; l<48; l++){

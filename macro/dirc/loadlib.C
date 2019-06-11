@@ -5,9 +5,10 @@
   while (sys.Tokenize(tok, from,":")) {
     if(tok.Contains("halld_recon")) path = tok;    
   }
-
+  
   //gSystem->Load(path+"/pid_dirc.so");
   gROOT->ProcessLine(".L DrcHit.cc+");
   gROOT->ProcessLine(".L DrcEvent.cc+");
   gSystem->Load(path+"/lut_dirc.so");
+  //gROOT->ProcessLine(".L DrcLutNode.cc++");
 }

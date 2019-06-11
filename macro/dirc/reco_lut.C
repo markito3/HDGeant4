@@ -1,14 +1,17 @@
 #define glx__sim
 //#include "../../../../halld_recon/master/src/plugins/Analysis/pid_dirc/DrcEvent.h"
 #include "DrcEvent.h"
-#include "../../../halld_recon/src/plugins/Analysis/lut_dirc/DrcLutNode.h"
+#include "DrcLutNode.h"
 #include "glxtools.C"
 
-void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lut_all_avr.root",int xbar=-1, int ybar=-1, double moms=4){
+void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lut_all_avr.root",int xbar=-1, int ybar=-1, double moms=4, double scan=0){
 
   if(!glx_initc(infile,1,"data/reco_lut_c")) return;
   const int nodes = glx_maxch;
   const int luts = 24;
+  double outcorr=0, corr=0;
+  corr = glx_readcorrection("lut.cor",inlut);
+  std::cout<<"corr "<<corr<<std::endl;
   
   TFile *fLut = new TFile(inlut);
   TTree *tLut=(TTree *) fLut->Get("lut_dirc") ;
@@ -24,7 +27,7 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
     for(int i=0; i<nodes; i++) lutNode[l][i] = (DrcLutNode*) cLut[l]->At(i);
   }
   TGaxis::SetMaxDigits(4);
-  
+   
   TVector3 fnX1 = TVector3 (1,0,0);   
   TVector3 fnY1 = TVector3( 0,1,0);
   TVector3 fnZ1 = TVector3( 0,0,1);
@@ -33,7 +36,7 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
 
   double minChangle = 0.6;
   double maxChangle = 0.9;
-  double sum1,sum2,noise = 0.4;
+  double sum1,sum2,noise = 0.40;
   double criticalAngle = asin(1.00028/1.47125); // n_quarzt = 1.47125; //(1.47125 <==> 390nm)
   double evtime,luttheta,tangle,lenz;
   int64_t pathid;
@@ -74,7 +77,7 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
     hAngle[i]->SetMarkerStyle(20);
     hAngle[i]->SetMarkerSize(0.8);
     if(moms<4) hLnDiff[i] = new TH1F(Form("hLnDiff_%d",i),";ln L(#pi) - ln L(K);entries [#]",80,-160,160);
-    else hLnDiff[i] = new TH1F(Form("hLnDiff_%d",i),";ln L(#pi) - ln L(K);entries [#]",80,-80,80);
+    else hLnDiff[i] = new TH1F(Form("hLnDiff_%d",i),";ln L(#pi) - ln L(K);entries [#]",80,-60,60);
   }
 
   // fAngle[2]->SetParameter(0,6.51118e-01);       
@@ -117,7 +120,8 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
 	if(fabs(glx_event->GetInvMass()-1.02)>0.03 || glx_event->GetChiSq()>20 ) continue;
 	if(fabs(glx_event->GetMissMass())>0.005) continue;
       }else if (fabs(glx_event->GetPdg())==211){
-	if(fabs(glx_event->GetInvMass()-0.77)>0.05 || fabs(glx_event->GetChiSq()-6)>3 ) continue;
+	if(fabs(glx_event->GetInvMass()-0.77)>0.05 || fabs(glx_event->GetChiSq()-6)>3.5 ) continue;
+	//if(fabs(glx_event->GetChiSq()-6)>5 ) continue;
 	if(fabs(glx_event->GetMissMass())>0.001) continue;
       }else continue;
 
@@ -133,13 +137,13 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
       
       // selection
       if(glx_event->GetType()!=2) continue; //1-LED 2-beam 0-rest
-      if(momInBar.Mag()<3.8 || momInBar.Mag()>4.2) continue;
+      if(momInBar.Mag()<3.7 || momInBar.Mag()>4.3) continue;
       //if(fabs(momInBar.Mag()-moms)>0.2) continue;
 
        // if(glx_event->GetTofTrackDist()>3) continue;
        // if(glx_event->GetDcHits()<20) continue;
 
-      if(hNph[pdgId]->GetEntries()>500) continue;
+      if(hNph[pdgId]->GetEntries()>1000) continue;
       int bin = (100+posInBar.X())/200.*nbins;
       //if(bar<0 || bar>=luts || (bar!=ybar && ybar!=-1)) continue;
       //if(bin<0 || bin>nbins || (bin!=xbar && xbar!=-1)) continue; 
@@ -163,7 +167,6 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
       int nph=0;
       int nphc=0;
       // hNphC->Fill(glx_event->GetHitSize());
-
       bool goodevt=0;
       for(int h = 0; h < glx_event->GetHitSize(); h++){
     	hit = glx_event->GetHit(h);
@@ -192,7 +195,7 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
 	  pathid = lutNode[bar][ch]->GetPathId(i);
 	  int nrefl = lutNode[bar][ch]->GetNRefl(i);
 	  double weight = lutNode[bar][ch]->GetWeight(i);
-	  //if(weight>0.05) continue;
+	  //if(weight<0.005) continue;
 	  //if(nrefl>10) continue;
 	  
 	  bool samepath(false);
@@ -218,7 +221,7 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
 	      luttheta = dir.Angle(TVector3(-1,0,0));
 	      // if(luttheta > TMath::PiOver2())
 	      if(r) luttheta = TMath::Pi()-luttheta;
-	      tangle = momInBar.Angle(dir)-0.00; //correction
+	      tangle = momInBar.Angle(dir)-corr; //0.0002; //correction
 	      if(bar==3) tangle-=0.001;
 	      if(bar==6) tangle+=0.002;
 	      if(bar==7) tangle-=0.002;
@@ -357,7 +360,7 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
   }
   
   //TString nid=Form("_%2.2f_%2.2f",theta,phi);
-  TString nid=Form("_%d_%d_%2.1f",xbar,ybar,moms);
+  TString nid=Form("_%d_%d_%2.1f_%2.1f",xbar,ybar,moms,scan);
   glx_drawDigi("m,p,v\n",0);
   glx_cdigi->SetName("hp"+nid);
   glx_canvasAdd(glx_cdigi);
@@ -592,6 +595,9 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
   lnph->AddEntry(hNph[3],"kaons","lp");
   lnph->Draw();
   
+  std::cout<<"corr "<<corr<<std::endl; 
+  if(fabs(corr)<0.000001) glx_writecorrection("lut.cor",inlut,cherenkovreco[2]-mAngle[2]);
+  
   std::cout<<"separation = "<< sep << "  nph = "<<nph <<std::endl;
   std::cout<<"maxTD "<<maxTD<<"  maxTR "<<maxTR<<std::endl;
   
@@ -611,6 +617,7 @@ void reco_lut(TString infile="vol/tree_060772.root",TString inlut="lut/lut_12/lu
   tc->Branch("maxTD",&maxTD,"maxTD/D");
   tc->Branch("maxTR",&maxTR,"maxTR/D");
   tc->Branch("maxTT",&maxTT,"maxTT/D");
+  tc->Branch("scan",&scan,"scan/D");
   
   tc->Branch("cangle2",&cherenkovreco[2],"cangle2/D");
   tc->Branch("cangle3",&cherenkovreco[3],"cangle3/D");

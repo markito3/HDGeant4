@@ -789,6 +789,15 @@ void glx_waitPrimitive(TCanvas *c){
   c->WaitPrimitive();
 }
 
+TCanvas *glx_canvasGet(TString name="c"){
+  TIter next(glx_canvasList);
+  TCanvas *c=0;
+  while((c = (TCanvas*) next())){
+    if(c->GetName()==name || name=="*") break;
+  }
+  return c;
+}
+
 void glx_waitPrimitive(TString name, TString prim=""){
   TIter next(glx_canvasList);
   TCanvas *c=0;
@@ -844,4 +853,28 @@ void glx_normalize(TH1F* h1,TH1F* h2){
   max += max*0.1;
   h1->GetYaxis()->SetRangeUser(0,max);
   h2->GetYaxis()->SetRangeUser(0,max);
+}
+
+double glx_readcorrection(TString in, TString key){
+  ifstream ifs;
+  ifs.open(in);
+
+  TString s;
+  double corr=0,c=0;
+
+  while (1) {
+    ifs >> s >> c;
+    if(s==key) return c;
+    if (!ifs.good()) break;    
+  }
+  ifs.close();
+  return corr;
+}
+
+void glx_writecorrection(TString out, TString key, double corr){
+  ofstream ofs;
+  ofs.open(out,std::ios_base::app);
+
+  ofs<<key<<" "<<corr<<"\n";
+  ofs.close();
 }

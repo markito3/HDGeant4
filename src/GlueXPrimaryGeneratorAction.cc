@@ -581,7 +581,7 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
 
       // array of bar y-positions for LUT from JGeometry
       double y = 0.; // no shift
-      double x = DIRC_LUT_X[dirclutpars[1]]+1;
+      double x = DIRC_LUT_X[dirclutpars[1]]+0.5;
       double z = DIRC_LUT_Z;
 
       double criticalAngle = asin(1.00028/1.47125); // n_quarzt = 1.47125 (390 nm)
@@ -598,10 +598,10 @@ void GlueXPrimaryGeneratorAction::GeneratePrimariesParticleGun(G4Event* anEvent)
         vec.rotateY(M_PI);
       }
      
-      // // spread over end of bar in y and z
-      // double scale = 0.8;
-      // y += scale*DIRC_QZBL_DY/2.0 - scale*DIRC_QZBL_DY*G4UniformRand();
-      // z += scale*DIRC_QZBL_DZ/2.0 - scale*DIRC_QZBL_DZ*G4UniformRand(); 
+      // spread over end of bar in y and z
+      double scale = 0.8;
+      y += scale*DIRC_QZBL_DY/2.0 - scale*DIRC_QZBL_DY*G4UniformRand();
+      z += scale*DIRC_QZBL_DZ/2.0 - scale*DIRC_QZBL_DZ*G4UniformRand(); 
 
       thetap = vec.theta();
       phip = vec.phi();

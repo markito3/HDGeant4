@@ -1,5 +1,5 @@
 #include "glxtools.C"
-#include "../../../halld_recon/src/plugins/Analysis/lut_dirc/DrcLutNode.h"
+#include "../../../../halld_recon/master/src/plugins/Analysis/lut_dirc/DrcLutNode.h"
 
 //lut/lut_11/lut_all_avr.root
 void drawLut(TString infile = "lut/lut_04/3/lut_3_avr.root"){
@@ -33,12 +33,12 @@ void drawLut(TString infile = "lut/lut_04/3/lut_3_avr.root"){
       int pix=inode%64;
       int size = node->Entries();      
       if(size<1) continue;
-      std::cout<<l<<" size "<<size<<std::endl;
+      std::cout<<l<<" size "<<size<<" "<<pmt<<std::endl;
       for(int i=0; i<size; i++){
 	dir = node->GetEntry(i);
 	time = node->GetTime(i);
 	pathid = node->GetPathId(i);
-	if(time>10) continue;
+	if(time>1000 || pmt>107) continue;
 	
 	glx_hdigi[pmt]->Fill(pix%8, pix/8);
       } 
