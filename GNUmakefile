@@ -78,7 +78,7 @@ DANALIBS = -L$(HALLD_RECON_HOME)/$(BMS_OSNAME)/lib -lHDGEOMETRY -lDANA \
            -L$(CCDB_HOME)/lib -lccdb \
            -L$(EVIOROOT)/lib -levioxx -levio \
            $(ROOTLIBS) \
-           -lpthread -ldl
+           -lfmt -lpthread -ldl
 
 ifdef ETROOT
 DANALIBS += -L$(ETROOT)/lib -let -let_remote
