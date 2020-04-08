@@ -21,13 +21,21 @@ ifdef DIRACXX_HOME
     CPPFLAGS += -I$(DIRACXX_HOME) -DUSING_DIRACXX -L$(DIRACXX_HOME) -lDirac
 endif
 
+ifdef PYTHON2_EXPLICIT
+    PYTHON_CONFIG = python2-config
+    BOOST_PYTHON = boost_python27
+else
+    PYTHON_CONFIG = python-config
+    BOOST_PYTHON = boost_python
+endif
+
 CPPFLAGS += -I$(HDDS_HOME) -I./src -I./src/G4fixes
 CPPFLAGS += -I./src/G4debug
 CPPFLAGS += -I$(HALLD_RECON_HOME)/$(BMS_OSNAME)/include
 CPPFLAGS += -I$(JANA_HOME)/include
 CPPFLAGS += -I$(shell root-config --incdir)
 CPPFLAGS += -I/usr/include/Qt
-CPPFLAGS += $(shell python2-config --includes)
+CPPFLAGS += $(shell $(PYTHON_CONFIG) --includes)
 CPPFLAGS += -Wno-unused-parameter -Wno-unused-but-set-variable
 CPPFLAGS += -DUSE_SSE2 -std=c++11
 #CPPFLAGS += -I/usr/include/Qt
@@ -90,7 +98,7 @@ INTYLIBS += -Wl,--whole-archive $(DANALIBS) -Wl,--no-whole-archive
 INTYLIBS += -fPIC -I$(HDDS_HOME) -I$(XERCESCROOT)/include
 INTYLIBS += -L${XERCESCROOT}/lib -lxerces-c
 INTYLIBS += -L$(G4TMPDIR) -lhdds
-INTYLIBS += -lboost_python27 -L$(shell python2-config --prefix)/lib $(shell python2-config --ldflags)
+INTYLIBS += -l$(BOOST_PYTHON) -L$(shell $(PYTHON_CONFIG) --prefix)/lib $(shell $(PYTHON_CONFIG) --ldflags)
 INTYLIBS += -L$(G4ROOT)/lib64 $(patsubst $(G4ROOT)/lib64/lib%.so, -l%, $(G4shared_libs))
 INTYLIBS += -lgfortran
 INTYLIBS += -L/usr/lib64
@@ -120,7 +128,7 @@ G4fixes_symlink:
 
 $(G4TMPDIR)/libcobrems.so: $(Cobrems_sources)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -Wl,--export-dynamic -Wl,-soname,libcobrems.so \
-	-shared -o $@ $^ $(G4shared_libs) -lboost_python27 -ltirpc
+	-shared -o $@ $^ $(G4shared_libs) -l$(BOOST_PYTHON) -ltirpc
 
 hdgeant4_objects := $(patsubst src/%.cc, $(G4TMPDIR)/%.o, $(hdgeant4_sources))
 G4fixes_objects := $(patsubst src/G4fixes/%.cc, $(G4FIXESDIR)/%.o, $(G4fixes_sources))
@@ -131,7 +139,7 @@ $(G4TMPDIR)/libhdgeant4.so: $(hdgeant4_objects)
 
 $(G4TMPDIR)/libG4fixes.so: $(G4FIXESDIR)/G4fixes.o $(G4fixes_objects) $(G4debug_objects)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -Wl,--export-dynamic -Wl,-soname,libG4fixes.so \
-	-shared -o $@ $^ $(G4shared_libs) -lboost_python27 -ltirpc
+	-shared -o $@ $^ $(G4shared_libs) -l$(BOOST_PYTHON) -ltirpc
 
 $(G4FIXESDIR)/G4fixes.o: src/G4fixes.cc
 	@mkdir -p $(G4FIXESDIR)
