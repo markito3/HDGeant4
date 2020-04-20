@@ -49,8 +49,9 @@ G4VDivisionParameterisation( EAxis axis, G4int nDiv,
                              DivisionType divType, G4VSolid* motherSolid )
   : faxis(axis), fnDiv( nDiv), fwidth(step), foffset(offset),
     fDivisionType(divType), fmotherSolid( motherSolid ), fReflectedSolid(false),
-    fDeleteSolid(false), theVoluFirstCopyNo(1), fhgap(0.), fRotMatrix(0)
+    fDeleteSolid(false), theVoluFirstCopyNo(1), fhgap(0.)
 {
+  fRotMatrix = new G4RotationMatrix();
 #ifdef G4DIVDEBUG
   if (verbose >= 1)
   {
@@ -88,9 +89,9 @@ void
 G4VDivisionParameterisation::
 ChangeRotMatrix( G4VPhysicalVolume *physVol, G4double rotZ ) const
 {
-  G4RotationMatrix *fRot = physVol->GetRotation();
-  *fRot = G4RotationMatrix();
-  fRot->rotateZ( rotZ );
+  *fRotMatrix = G4RotationMatrix();
+  fRotMatrix->rotateZ( rotZ );
+  physVol->SetRotation(fRotMatrix);
 }
 
 //--------------------------------------------------------------------------

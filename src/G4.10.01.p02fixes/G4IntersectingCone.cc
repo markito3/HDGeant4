@@ -224,17 +224,17 @@ G4int G4IntersectingCone::LineHitsCone1( const G4ThreeVector &p,
   
   G4double radical = b*b - 4*a*c;
  
-  if (radical < -1e-12*b*b)  { return 0; }    // No solution
+  if (radical < -1E-6*std::fabs(b))  { return 0; }    // No solution
   
-  if (radical < 1e-12*b*b)
+  if (radical < 1E-6*std::fabs(b))
   {
     //
     // The radical is roughly zero: check for special, very rare, cases
     //
     if (std::fabs(a) > 1/kInfinity)
       {
-      //if(B==0.) { return 0; }
-      //if ( std::fabs(x0*ty - y0*tx) < std::fabs(1e-6/(B+1e-99)) )
+      if(B==0.) { return 0; }
+      if ( std::fabs(x0*ty - y0*tx) < std::fabs(1E-6/B) )
       {
          *s1 = -0.5*b/a;
          return 1;
@@ -327,16 +327,16 @@ G4int G4IntersectingCone::LineHitsCone2( const G4ThreeVector &p,
   
   G4double radical = b*b - 4*a*c;
  
-  if (radical < -1e-12*b*b) { return 0; }   // No solution
+  if (radical < -1E-6*std::fabs(b)) { return 0; }   // No solution
   
-  if (radical < 1e-12*b*b)
+  if (radical < 1E-6*std::fabs(b))
   {
     //
     // The radical is roughly zero: check for special, very rare, cases
     //
     if (std::fabs(a) > 1/kInfinity)
     {
-      //if ( std::fabs(x0*ty - y0*tx) < std::fabs(1e-6/(B+1e-99)) )
+      if ( std::fabs(x0*ty - y0*tx) < std::fabs(1E-6/B) )
       {
         *s1 = -0.5*b/a;
         return 1;
