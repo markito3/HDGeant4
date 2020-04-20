@@ -491,66 +491,7 @@ void G4PhysicalVolumeModel::DescribeAndDescend
       if (density < densityCut) thisToBeDrawn = false;
     }
   }
-
-#ifdef BYPASS_DRAWING_CLIPPED_VOLUMES
-
-  // Check if a view clipping operation cuts this volume from the scene
-
-  bool thisToBeBypassed = false;
-  G4VSolid* pIntersector = fpMP->GetSectionSolid();
-  G4VSolid* pSubtractor = fpMP->GetCutawaySolid();
-  if (fpClippingSolid) {
-    switch (fClippingMode) {
-     case subtraction:
-       pSubtractor = fpClippingSolid;
-       break;
-     case intersection:
-       pIntersector = fpClippingSolid;
-       break;
-    }
-  }
-
-  G4DisplacedSolid *pClipper;
-  if ((pClipper = dynamic_cast<G4DisplacedSolid*>(pIntersector)))
-  {
-    G4AffineTransform clipAT(pClipper->GetTransform());
-    G4AffineTransform currAT(fpCurrentTransform->getRotation().inverse(),
-                             fpCurrentTransform->getTranslation());
-    G4AffineTransform combAT;
-    combAT.Product(currAT,clipAT);
-    G4DisplacedSolid pClipped("temporary_to_clip",pSol,combAT);
-    G4VisExtent clipper(pClipper->GetConstituentMovedSolid()->GetExtent());
-    G4VisExtent clipped(pClipped.GetExtent());
-    thisToBeBypassed = (clipper.GetXmax() < clipped.GetXmin())
-                    || (clipper.GetXmin() > clipped.GetXmax())
-                    || (clipper.GetYmax() < clipped.GetYmin())
-                    || (clipper.GetYmin() > clipped.GetYmax())
-                    || (clipper.GetZmax() < clipped.GetZmin())
-                    || (clipper.GetZmin() > clipped.GetZmax());
-  }
-
-  if ((pClipper = dynamic_cast<G4DisplacedSolid*>(pSubtractor)))
-  {
-    G4AffineTransform clipAT(pClipper->GetTransform());
-    G4AffineTransform currAT(fpCurrentTransform->getRotation().inverse(),
-                             fpCurrentTransform->getTranslation());
-    G4AffineTransform combAT;
-    combAT.Product(currAT,clipAT);
-    G4DisplacedSolid pClipped("temporary_to_clip",pSol,combAT);
-    G4VisExtent clipper(pClipper->GetConstituentMovedSolid()->GetExtent());
-    G4VisExtent clipped(pClipped.GetExtent());
-    thisToBeBypassed = (clipper.GetXmax() > clipped.GetXmax())
-                    && (clipper.GetXmin() < clipped.GetXmin())
-                    && (clipper.GetYmax() > clipped.GetYmax())
-                    && (clipper.GetYmin() < clipped.GetYmin())
-                    && (clipper.GetZmax() > clipped.GetZmax())
-                    && (clipper.GetZmin() < clipped.GetZmin());
-  }
-
-  thisToBeDrawn = thisToBeDrawn && (! thisToBeBypassed);
-
-#endif
-
+  
   // Record thisToBeDrawn in path...
   fFullPVPath.back().SetDrawn(thisToBeDrawn);
 
@@ -586,11 +527,7 @@ void G4PhysicalVolumeModel::DescribeAndDescend
 
   // First, reasons that do not depend on culling policy...
   G4int nDaughters = pLV->GetNoDaughters();
-#ifdef BYPASS_DRAWING_CLIPPED_VOLUMES
-  G4bool daughtersToBeDrawn = ! thisToBeBypassed;
-#else
   G4bool daughtersToBeDrawn = true;
-#endif
   // 1) There are no daughters...
   if (!nDaughters) daughtersToBeDrawn = false;
   // 2) We are at the limit if requested depth...
@@ -694,7 +631,7 @@ void G4PhysicalVolumeModel::DescribeSolid
     else
       G4Polyhedron::SetNumberOfRotationSteps(fpMP->GetNoOfSides());
     const G4Polyhedron* pOriginal = pSol->GetPolyhedron();
-    //G4Polyhedron::ResetNumberOfRotationSteps();
+    G4Polyhedron::ResetNumberOfRotationSteps();
 
     if (!pOriginal) {
 
