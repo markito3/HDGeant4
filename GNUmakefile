@@ -86,14 +86,14 @@ G4shared_libs := $(wildcard $(G4ROOT)/lib64/*.so)
 ifeq ($(PYTHON_GE_3), true)
   BOOST_PYTHON_LIB = boost_python$(PYTHON_MAJOR_VERSION)$(PYTHON_MINOR_VERSION)
 else
-  BOOST_PYTHON_LIB = boost_python
+  BOOST_PYTHON_LIB = boost_python38
 endif
 
 INTYLIBS += -Wl,--whole-archive $(DANALIBS) -Wl,--no-whole-archive
 INTYLIBS += -fPIC -I$(HDDS_HOME) -I$(XERCESCROOT)/include
 INTYLIBS += -L${XERCESCROOT}/lib -lxerces-c
 INTYLIBS += -L$(G4TMPDIR) -lhdds
-INTYLIBS += -l$(BOOST_PYTHON_LIB) -L$(shell python-config --prefix)/lib $(shell python-config --ldflags)
+INTYLIBS += -l$(BOOST_PYTHON_LIB) -L$(shell python3-config --prefix)/lib $(shell python3-config --ldflags) -lpython3.8
 INTYLIBS += -L$(G4ROOT)/lib64 $(patsubst $(G4ROOT)/lib64/lib%.so, -l%, $(G4shared_libs))
 INTYLIBS += -lgfortran
 INTYLIBS += -L/usr/lib64
