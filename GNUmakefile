@@ -28,7 +28,7 @@ CPPFLAGS += -I./src/G4debug
 CPPFLAGS += -I$(HALLD_RECON_HOME)/$(BMS_OSNAME)/include
 CPPFLAGS += -I$(JANA_HOME)/include
 CPPFLAGS += -I$(shell root-config --incdir)
-CPPFLAGS += $(shell python-config --includes)
+CPPFLAGS += $(shell python3-config --includes)
 CPPFLAGS += -Wno-unused-parameter -Wno-unused-but-set-variable
 CPPFLAGS += -DUSE_SSE2 -std=c++11
 #CPPFLAGS += -I/usr/include/Qt
