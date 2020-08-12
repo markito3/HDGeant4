@@ -3,8 +3,6 @@
 # GNUmakefile for examples module.  Gabriele Cosmo, 06/04/98.
 # --------------------------------------------------------------
 
-include python_version.mk
-
 name := hdgeant4
 G4TARGET := $(name)
 G4EXLIB := true
@@ -28,7 +26,7 @@ CPPFLAGS += -I./src/G4debug
 CPPFLAGS += -I$(HALLD_RECON_HOME)/$(BMS_OSNAME)/include
 CPPFLAGS += -I$(JANA_HOME)/include
 CPPFLAGS += -I$(shell root-config --incdir)
-CPPFLAGS += $(shell python-config --includes)
+CPPFLAGS += $(shell python3-config --includes)
 CPPFLAGS += -Wno-unused-parameter -Wno-unused-but-set-variable
 CPPFLAGS += -DUSE_SSE2 -std=c++11
 #CPPFLAGS += -I/usr/include/Qt
@@ -83,21 +81,15 @@ DANALIBS += -L$(ETROOT)/lib -let -let_remote
 endif
 
 G4shared_libs := $(wildcard $(G4ROOT)/lib64/*.so)
-ifeq ($(PYTHON_GE_3), true)
-  BOOST_PYTHON_LIB = boost_python$(PYTHON_MAJOR_VERSION)$(PYTHON_MINOR_VERSION)
-else
-  BOOST_PYTHON_LIB = boost_python38
-endif
 
 INTYLIBS += -Wl,--whole-archive $(DANALIBS) -Wl,--no-whole-archive
 INTYLIBS += -fPIC -I$(HDDS_HOME) -I$(XERCESCROOT)/include
 INTYLIBS += -L${XERCESCROOT}/lib -lxerces-c
 INTYLIBS += -L$(G4TMPDIR) -lhdds
-INTYLIBS += -l$(BOOST_PYTHON_LIB) -L$(shell python3-config --prefix)/lib $(shell python3-config --ldflags) -lpython3.8
+INTYLIBS += -lboost_python38 -L$(shell python3-config --prefix)/lib $(shell python3-config --ldflags)  -lpython3.8
 INTYLIBS += -L$(G4ROOT)/lib64 $(patsubst $(G4ROOT)/lib64/lib%.so, -l%, $(G4shared_libs))
 INTYLIBS += -lgfortran
 INTYLIBS += -L/usr/lib64
-INTYLIBS += -ltirpc
 
 EXTRALIBS += -lG4fixes
 
@@ -123,7 +115,7 @@ G4fixes_symlink:
 
 $(G4TMPDIR)/libcobrems.so: $(Cobrems_sources)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -Wl,--export-dynamic -Wl,-soname,libcobrems.so \
-	-shared -o $@ $^ $(G4shared_libs) -l$(BOOST_PYTHON_LIB)
+	-shared -o $@ $^ $(G4shared_libs) -lboost_python38
 
 hdgeant4_objects := $(patsubst src/%.cc, $(G4TMPDIR)/%.o, $(hdgeant4_sources))
 G4fixes_objects := $(patsubst src/G4fixes/%.cc, $(G4FIXESDIR)/%.o, $(G4fixes_sources))
@@ -134,7 +126,7 @@ $(G4TMPDIR)/libhdgeant4.so: $(hdgeant4_objects)
 
 $(G4TMPDIR)/libG4fixes.so: $(G4FIXESDIR)/G4fixes.o $(G4fixes_objects) $(G4debug_objects)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -Wl,--export-dynamic -Wl,-soname,libG4fixes.so \
-	-shared -o $@ $^ $(G4shared_libs) -l$(BOOST_PYTHON_LIB)
+	-shared -o $@ $^ $(G4shared_libs) -lboost_python38
 
 $(G4FIXESDIR)/G4fixes.o: src/G4fixes.cc
 	@mkdir -p $(G4FIXESDIR)
@@ -204,10 +196,3 @@ $(G4BINDIR)/genBH: src/utils/genBH.cc
 
 $(G4BINDIR)/adapt: src/utils/adapt.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ -L$(G4LIBDIR) -lhdgeant4 $(DANALIBS) $(ROOTLIBS) -Wl,-rpath=$(G4LIBDIR)
-
-show_env:
-	@echo PYTHON_VERSION = $(PYTHON_VERSION)
-	@echo PYTHON_MAJOR_VERSION = $(PYTHON_MAJOR_VERSION)
-	@echo PYTHON_MINOR_VERSION = $(PYTHON_MINOR_VERSION)
-	@echo PYTHON_SUBMINOR_VERSION = $(PYTHON_SUBMINOR_VERSION)
-	@echo PYTHON_GE_3 = $(PYTHON_GE_3)
