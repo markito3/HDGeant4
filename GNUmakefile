@@ -3,7 +3,7 @@
 # GNUmakefile for examples module.  Gabriele Cosmo, 06/04/98.
 # --------------------------------------------------------------
 
-include python_version.mk
+SHELL := /bin/bash
 
 name := hdgeant4
 G4TARGET := $(name)
@@ -23,12 +23,34 @@ ifdef DIRACXX_HOME
     CPPFLAGS += -I$(DIRACXX_HOME) -DUSING_DIRACXX -L$(DIRACXX_HOME) -lDirac
 endif
 
+UBUNTU_GE_20 := $(shell ./ubuntu_version_test.sh 20)
+ifeq ($(UBUNTU_GE_20), true)
+  python_command = python3
+else
+  python_command = python
+endif
+PYTHON_MAJOR_VERSION := $(shell ./python_version_test.sh $(python_command) major)
+PYTHON_MINOR_VERSION := $(shell ./python_version_test.sh $(python_command) minor)
+PYTHON_GE_3 := $(shell ./python_version_test.sh $(python_command) major_test 3)
+USE_PYTHON_3 := $(shell \
+    if [[ "$(PYTHON_GE_3)" == "true" || "$(UBUNTU_GE_20)" == "true" ]] ; \
+    then echo true ; else echo false ; fi)
+ifeq ($(USE_PYTHON_3), true)
+  BOOST_PYTHON_LIB = boost_python$(PYTHON_MAJOR_VERSION)$(PYTHON_MINOR_VERSION)
+  PYTHON_CONFIG = python3-config
+  PYTHON_LIB = python$(PYTHON_MAJOR_VERSION).$(PYTHON_MINOR_VERSION)
+else
+  BOOST_PYTHON_LIB = boost_python
+  PYTHON_CONFIG = python-config
+  PYTHON_LIB = python
+endif
+
 CPPFLAGS += -I$(HDDS_HOME) -I./src -I./src/G4fixes
 CPPFLAGS += -I./src/G4debug
 CPPFLAGS += -I$(HALLD_RECON_HOME)/$(BMS_OSNAME)/include
 CPPFLAGS += -I$(JANA_HOME)/include
 CPPFLAGS += -I$(shell root-config --incdir)
-CPPFLAGS += $(shell python3-config --includes)
+CPPFLAGS += $(shell $(PYTHON_CONFIG) --includes)
 CPPFLAGS += -Wno-unused-parameter -Wno-unused-but-set-variable
 CPPFLAGS += -DUSE_SSE2 -std=c++11
 #CPPFLAGS += -I/usr/include/Qt
@@ -83,17 +105,12 @@ DANALIBS += -L$(ETROOT)/lib -let -let_remote
 endif
 
 G4shared_libs := $(wildcard $(G4ROOT)/lib64/*.so)
-ifeq ($(PYTHON_GE_3), true)
-  BOOST_PYTHON_LIB = boost_python$(PYTHON_MAJOR_VERSION)$(PYTHON_MINOR_VERSION)
-else
-  BOOST_PYTHON_LIB = boost_python38
-endif
 
 INTYLIBS += -Wl,--whole-archive $(DANALIBS) -Wl,--no-whole-archive
 INTYLIBS += -fPIC -I$(HDDS_HOME) -I$(XERCESCROOT)/include
 INTYLIBS += -L${XERCESCROOT}/lib -lxerces-c
 INTYLIBS += -L$(G4TMPDIR) -lhdds
-INTYLIBS += -l$(BOOST_PYTHON_LIB) -L$(shell python3-config --prefix)/lib $(shell python3-config --ldflags) -lpython3.8
+INTYLIBS += -l$(BOOST_PYTHON_LIB) -L$(shell $(PYTHON_CONFIG) --prefix)/lib $(shell $(PYTHON_CONFIG) --ldflags) -l$(PYTHON_LIB)
 INTYLIBS += -L$(G4ROOT)/lib64 $(patsubst $(G4ROOT)/lib64/lib%.so, -l%, $(G4shared_libs))
 INTYLIBS += -lgfortran
 INTYLIBS += -L/usr/lib64
@@ -206,8 +223,8 @@ $(G4BINDIR)/adapt: src/utils/adapt.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ -L$(G4LIBDIR) -lhdgeant4 $(DANALIBS) $(ROOTLIBS) -Wl,-rpath=$(G4LIBDIR)
 
 show_env:
-	@echo PYTHON_VERSION = $(PYTHON_VERSION)
+	@echo PYTHON_GE_3 = $(PYTHON_GE_3) 
+	@echo UBUNTU_GE_20 = $(UBUNTU_GE_20)
+	@echo USE_PYTHON_3 = $(USE_PYTHON_3)
 	@echo PYTHON_MAJOR_VERSION = $(PYTHON_MAJOR_VERSION)
 	@echo PYTHON_MINOR_VERSION = $(PYTHON_MINOR_VERSION)
-	@echo PYTHON_SUBMINOR_VERSION = $(PYTHON_SUBMINOR_VERSION)
-	@echo PYTHON_GE_3 = $(PYTHON_GE_3)
