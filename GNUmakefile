@@ -28,7 +28,7 @@ CPPFLAGS += -I./src/G4debug
 CPPFLAGS += -I$(HALLD_RECON_HOME)/$(BMS_OSNAME)/include
 CPPFLAGS += -I$(JANA_HOME)/include
 CPPFLAGS += -I$(shell root-config --incdir)
-CPPFLAGS += $(shell python-config --includes)
+CPPFLAGS += $(shell python3-config --includes)
 CPPFLAGS += -Wno-unused-parameter -Wno-unused-but-set-variable
 CPPFLAGS += -DUSE_SSE2 -std=c++11
 #CPPFLAGS += -I/usr/include/Qt
@@ -84,7 +84,7 @@ endif
 
 G4shared_libs := $(wildcard $(G4ROOT)/lib64/*.so)
 ifeq ($(PYTHON_GE_3), true)
-  BOOST_PYTHON_LIB = boost_python$(PYTHON_MAJOR_VERSION)$(PYTHON_MINOR_VERSION)
+  BOOST_PYTHON_LIB = boost_python$(PYTHON_MAJOR_VERSION)
 else
   BOOST_PYTHON_LIB = boost_python
 endif
@@ -93,7 +93,7 @@ INTYLIBS += -Wl,--whole-archive $(DANALIBS) -Wl,--no-whole-archive
 INTYLIBS += -fPIC -I$(HDDS_HOME) -I$(XERCESCROOT)/include
 INTYLIBS += -L${XERCESCROOT}/lib -lxerces-c
 INTYLIBS += -L$(G4TMPDIR) -lhdds
-INTYLIBS += -l$(BOOST_PYTHON_LIB) -L$(shell python-config --prefix)/lib $(shell python-config --ldflags)
+INTYLIBS += -l$(BOOST_PYTHON_LIB) -L$(shell python3-config --prefix)/lib $(shell python3-config --ldflags)
 INTYLIBS += -L$(G4ROOT)/lib64 $(patsubst $(G4ROOT)/lib64/lib%.so, -l%, $(G4shared_libs))
 INTYLIBS += -lgfortran
 INTYLIBS += -L/usr/lib64
