@@ -1,5 +1,5 @@
 //
-// GlueXSensitiveDetectorFMWPC - class header
+// GlueXSensitiveDetectorFMWC - class header
 //
 // author: richard.t.jones at uconn.edu
 // version: november 28, 2016
