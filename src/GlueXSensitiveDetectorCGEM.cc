@@ -285,9 +285,9 @@ void GlueXSensitiveDetectorCGEM::EndOfEvent(G4HCofThisEvent*)
    if (record->getHitViews().size() == 0) 
       record->getPhysicsEvent().addHitViews();
    hddm_s::HitView &hitview = record->getPhysicsEvent().getHitView();
-   /*if (hitview.getCGEMs().size() == 0)
+   if (hitview.getCGEMs().size() == 0)
       hitview.addCGEMs();
-      hddm_s::CGEM &cgem = hitview.getCGEM();*/
+      hddm_s::CGEM &cgem = hitview.getCGEM();
 
    // Collect and output the cgemTruthHits
    for (siter = holes->begin(); siter != holes->end(); ++siter) {
@@ -300,7 +300,7 @@ void GlueXSensitiveDetectorCGEM::EndOfEvent(G4HCofThisEvent*)
          }
       }
       if (hits.size() > 0) {
-	/*hddm_s::CGemList hole = cgem.addCGems(1);
+	hddm_s::CGemList hole = cgem.addCGems(1);
          hole(0).setLayer(siter->second->layer_);
          hole(0).setHole(siter->second->hole_);
          for (int ih=0; ih < (int)hits.size(); ++ih) {
@@ -308,13 +308,13 @@ void GlueXSensitiveDetectorCGEM::EndOfEvent(G4HCofThisEvent*)
             thit(0).setDE(hits[ih].dE_keV);
             thit(0).setDx(hits[ih].dx_cm);
             thit(0).setT(hits[ih].t_ns);
-	    }*/
+	    }
       }
    }
 
    // Collect and output the cgemTruthPoints
    for (piter = points->begin(); piter != points->end(); ++piter) {
-     /*hddm_s::CGemTruthPointList point = cgem.addCGemTruthPoints(1);
+     hddm_s::CGemTruthPointList point = cgem.addCGemTruthPoints(1);
       point(0).setPrimary(piter->second->primary_);
       point(0).setPtype(piter->second->ptype_G3);
       point(0).setPx(piter->second->px_GeV);
@@ -327,7 +327,7 @@ void GlueXSensitiveDetectorCGEM::EndOfEvent(G4HCofThisEvent*)
       point(0).setT(piter->second->t_ns);
       point(0).setTrack(piter->second->track_);
       hddm_s::TrackIDList tid = point(0).addTrackIDs();
-      tid(0).setItrack(piter->second->trackID_);*/
+      tid(0).setItrack(piter->second->trackID_);
    }
 }
 
