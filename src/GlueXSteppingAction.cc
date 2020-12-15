@@ -9,7 +9,7 @@
 #include "GlueXPrimaryGeneratorAction.hh"
 #include "GlueXUserEventInformation.hh"
 #include "GlueXUserTrackInformation.hh"
-#include "GlueXPathFinder.hh"
+#include "G4ParallelWorldProcess.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4RunManager.hh"
 #include "G4Threading.hh"
@@ -29,6 +29,8 @@ std::map<int, TTree*> bgprofiles;
 #endif
 
 G4Mutex GlueXSteppingAction::fMutex = G4MUTEX_INITIALIZER;
+int GlueXSteppingAction::fStopTracksInCollimator = 0;
+int GlueXSteppingAction::fSaveTrajectories = 0;
 
 GlueXSteppingAction::GlueXSteppingAction()
 {
@@ -66,9 +68,7 @@ GlueXSteppingAction::GlueXSteppingAction()
 }
 
 GlueXSteppingAction::GlueXSteppingAction(const GlueXSteppingAction &src)
-{
-   fStopTracksInCollimator = src.fStopTracksInCollimator;
-}
+{}
 
 GlueXSteppingAction::~GlueXSteppingAction()
 {
@@ -94,7 +94,8 @@ void GlueXSteppingAction::UserSteppingAction(const G4Step* step)
                                           event->GetUserInformation();
    GlueXUserTrackInformation *trackinfo;
    trackinfo = (GlueXUserTrackInformation*)track->GetUserInformation();
-   G4VPhysicalVolume *pvol = GlueXPathFinder::GetLocatedVolume();
+   const G4Step *hyperstep = G4ParallelWorldProcess::GetHyperStep();
+   G4VPhysicalVolume *pvol = hyperstep->GetPostStepPoint()->GetPhysicalVolume();
 
    // Kill tracks at entry to primary collimator or active collimator
    // if this was asked for in the control file.

@@ -6,11 +6,9 @@
 //
 // In the context of the Geant4 event-level multithreading model,
 // this class is "thread-local", ie. has thread-local state.
-// Separate object instances are created for each worker thread,
-// but virtually all of its functions need to be serialized, so
-// it maintains its own interlocks for this purpose. Resources
-// are created once when the first object is instantiated, and
-// destroyed once when the last object is destroyed.
+// Separate object instances are created for each worker thread.
+// Resources are created once when the first object is instantiated,
+// and destroyed once when the last object is destroyed.
 
 #ifndef _GLUEXBEAMCONVERSIONPROCESS_H_
 #define _GLUEXBEAMCONVERSIONPROCESS_H_
@@ -19,6 +17,8 @@
 #include <G4VParticleChange.hh>
 #include <ImportanceSampler.hh>
 #include <PairConversionGeneration.hh>
+#include <AdaptiveSampler.hh>
+#include <G4AutoLock.hh>
 #include <G4Step.hh>
 
 class GlueXBeamConversionProcess: public G4VDiscreteProcess
@@ -42,22 +42,30 @@ class GlueXBeamConversionProcess: public G4VDiscreteProcess
                                     G4ForceCondition *condition);
    void GenerateBetheHeitlerProcess(const G4Step &step);
 
-#if USING_DIRACXX
-   static PairConversionGeneration *fPairsGeneration;
+#ifdef USING_DIRACXX
+   PairConversionGeneration *fPairsGeneration;
 #endif
 
-   int fStopBeamBeforeConverter;
-   int fStopBeamAfterConverter;
-   int fStopBeamAfterTarget;
+   static int fStopBeamBeforeConverter;
+   static int fStopBeamAfterConverter;
+   static int fStopBeamAfterTarget;
+   static G4double fBHpair_mass_min;
 
    void prepareImportanceSamplingPDFs();
 
-   static ImportanceSampler fPaircohPDF;
-   static ImportanceSampler fTripletPDF;
-   static G4double fBHpair_mass_min;
+   ImportanceSampler *fPaircohPDF;
+   ImportanceSampler *fTripletPDF;
+
+
+   AdaptiveSampler *fAdaptiveSampler;
+   void prepareAdaptiveSampler();
 
  private:
    GlueXBeamConversionProcess operator=(GlueXBeamConversionProcess &src);
+
+   static G4Mutex fMutex;
+   static int fInitialized;
+   static std::vector<AdaptiveSampler*> fAdaptiveSamplerRegistry;
 };
 
 #endif

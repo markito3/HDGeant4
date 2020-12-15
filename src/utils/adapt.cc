@@ -27,10 +27,10 @@ void usage() {
    std::cout << "Usage: adapt [options] <input1> [<input2> ...]" << std::endl
              << "  where options include" << std::endl
              << "     -o <output_file> : output filename [adapted.astate]" << std::endl
-             << "     -t <threshold> : sampling threshold [25]" << std::endl
+             << "     -t <threshold> : sampling threshold (%) [100]" << std::endl
              << "     -v <verbosity> : verbosity level [3]" << std::endl
              << "     -c <count> : internal generator check [0]" << std::endl
-             << "     -s : just report statistics, no adaption" << std::endl;
+             << "     -s : just report statistics, no optimization" << std::endl;
    exit(1);
 }
 
@@ -38,8 +38,8 @@ int main(int argc, char **argv)
 {
    int Ndim=0;
    int Nfixed=0;
-   int do_adaptation=1;
-   double threshold=1000;
+   int do_optimization=1;
+   double threshold=1;
    int verbosity_level=1;
    long int internal_check_count = 0;
    std::string outfile("adapted.astate");
@@ -56,8 +56,10 @@ int main(int argc, char **argv)
       else if ((opt = sscanf(argv[iarg], "-t %lf", &threshold))) {
          if (opt == EOF)
             sscanf(argv[++iarg], "%lf", &threshold);
-         if (threshold > 0)
+         if (threshold > 0) {
+            threshold *= 0.01;
             continue;
+         }
          else
             usage();
       }
@@ -73,7 +75,7 @@ int main(int argc, char **argv)
          continue;
       }
       else if (strncmp(argv[iarg], "-s", 2) == 0) {
-         do_adaptation = 0;
+         do_optimization = 0;
          continue;
       }
       else if (argv[iarg][0] == '-') {
@@ -121,8 +123,14 @@ int main(int argc, char **argv)
       delete [] u;
    }
 
-   if (verbosity_level > 0)
-      std::cout << "sample size N = " << sampler->getNsample() << std::endl;
+   if (verbosity_level > 0) {
+      std::cout << "========================================="
+                << " adapt - Adaptive Sampler helper utility "
+                << "========================================="
+                << std::endl;
+      std::cout << "sample size N = " << sampler->getNsample()
+                << std::endl;
+   }
 
    double error;
    double error_uncertainty;
@@ -150,7 +158,7 @@ int main(int argc, char **argv)
    }
 
    int Na = 0;
-   if (do_adaptation) {
+   if (do_optimization) {
       sampler->setAdaptation_sampling_threshold(threshold);
       Na = sampler->adapt();
       if (verbosity_level > 0)
@@ -165,8 +173,24 @@ int main(int argc, char **argv)
                    << ", efficiency = " << new_efficiency
                    << std::endl;
    }
-   sampler->saveState(outfile, do_adaptation);
+   else if (threshold < 1) {
+      sampler->setAdaptation_sampling_threshold(threshold);
+      Na = sampler->adapt();
+      if (verbosity_level > 0)
+         std::cout << "sampler.adapt() returns " << Na << std::endl;
+      double new_error;
+      double new_error_uncertainty;
+      double new_result = sampler->getResult(&new_error, &new_error_uncertainty);
+      double new_efficiency = sampler->getEfficiency(false);
+      if (verbosity_level > 0)
+         std::cout << "updated result = " << new_result << " +/- "
+                   << new_error << " +/- " << new_error_uncertainty
+                   << ", efficiency = " << new_efficiency
+                   << std::endl;
+   }
+
+   sampler->saveState(outfile, do_optimization);
    if (verbosity_level > 2)
-      sampler->display_tree(do_adaptation);
+      sampler->display_tree(do_optimization);
    return (Na == 0);
 }

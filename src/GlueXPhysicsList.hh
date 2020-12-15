@@ -37,7 +37,7 @@ class GlueXPhysicsList: public G4VModularPhysicsList
    virtual void SetCuts();
 
    virtual void ListActiveProcesses();
-   virtual void SelectActiveProcesses(G4int verbosity=1);
+   virtual void SelectActiveProcesses(G4int verbosity=0);
 
    virtual void DoMultipleScattering(G4int flag);
    virtual void DoBremsstrahlung(G4int flag);
@@ -57,7 +57,7 @@ class GlueXPhysicsList: public G4VModularPhysicsList
    GlueXUserOptions *fOptions;
 
 #if USING_DIRACXX
-   static G4ThreadLocal GlueXBeamConversionProcess *fBeamConversion;
+   GlueXBeamConversionProcess *fBeamConversion;
 #endif
    G4OpticalPhysics *fOpticalPhysics;
 
