@@ -14,6 +14,7 @@
 #include "GlueXSensitiveDetectorSTC.hh"
 #include "GlueXSensitiveDetectorBCAL.hh"
 #include "GlueXSensitiveDetectorFCAL.hh"
+#include "GlueXSensitiveDetectorFCALinsert.hh"
 #include "GlueXSensitiveDetectorGCAL.hh"
 #include "GlueXSensitiveDetectorCCAL.hh"
 #include "GlueXSensitiveDetectorFTOF.hh"
@@ -211,6 +212,7 @@ const GlueXDetectorConstruction *GlueXDetectorConstruction::GetInstance()
    // application obtain the primary instance, if any. If none has
    // yet been constructed, it returns zero.
 
+   G4AutoLock barrier(&fMutex);
    if (fInstance.size() > 0)
       return *fInstance.begin();
    return 0;
@@ -220,6 +222,7 @@ const HddsG4Builder *GlueXDetectorConstruction::GetBuilder()
 {
    // Return a const pointer to the internal HddsG4Builder object.
 
+   G4AutoLock barrier(&fMutex);
    if (fInstance.size() > 0)
       return &(*fInstance.begin())->fHddsBuilder;
    return 0;
@@ -271,6 +274,7 @@ void GlueXDetectorConstruction::ConstructSDandField()
    GlueXSensitiveDetectorSTC* stcHandler = 0;
    GlueXSensitiveDetectorBCAL* bcalHandler = 0;
    GlueXSensitiveDetectorFCAL* fcalHandler = 0;
+   GlueXSensitiveDetectorFCALinsert* fcalInsertHandler = 0;
    GlueXSensitiveDetectorGCAL* gcalHandler = 0;
    GlueXSensitiveDetectorCCAL* ccalHandler = 0;
    GlueXSensitiveDetectorFTOF* ftofHandler = 0;
@@ -347,6 +351,14 @@ void GlueXDetectorConstruction::ConstructSDandField()
             SDman->AddNewDetector(fcalHandler);
          }
          iter->second->SetSensitiveDetector(fcalHandler);
+      }
+     else if (volname == "LTB1") {
+         if (fcalHandler == 0) {
+            fcalInsertHandler = new GlueXSensitiveDetectorFCALinsert("fcalinsert");
+            SDman->AddNewDetector(fcalInsertHandler);
+	    cout << "got here" <<endl;
+         }
+         iter->second->SetSensitiveDetector(fcalInsertHandler);
       }
       else if (volname == "GCAL") {
          if (gcalHandler == 0) {

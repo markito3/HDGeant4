@@ -14,7 +14,8 @@
 #include "G4VUserEventInformation.hh"
 #include "G4PrimaryVertex.hh"
 #include "G4ThreeVector.hh"
-#include <G4TrackVector.hh>
+#include "G4TrackVector.hh"
+#include "G4AutoLock.hh"
 
 #include <HDDM/hddm_s.hpp>
 
@@ -44,6 +45,7 @@ class GlueXUserEventInformation: public G4VUserEventInformation
    void AddMCtrajectoryPoint(const G4Step &step, int save_option);
 
    int GetRunNo();
+   long int GetEventNo();
    double GetBeamPhotonEnergy();
    int GetGlueXTrackID(int g4ID);
    int GetGlueXTrackID(const G4Track *track);
@@ -59,12 +61,19 @@ class GlueXUserEventInformation: public G4VUserEventInformation
    void SetRandomSeeds();
    void Print() const;
 
+   static void Dlog(std::string msg);
+   void Dlog(std::string msg, bool rewind);
+
    hddm_s::HDDM *getOutputRecord() {
       return fOutputRecord;
    }
 
-   static int fWriteNoHitEvents;
-   static long int *fStartingSeeds;
+   static void setWriteNoHitEvents(int flag) {
+      fWriteNoHitEvents = flag;
+   }
+   static int getWriteNoHitEvents() {
+      return fWriteNoHitEvents;
+   }
 
  protected:
    hddm_s::HDDM *fOutputRecord;
@@ -74,9 +83,19 @@ class GlueXUserEventInformation: public G4VUserEventInformation
    std::map<int,int> fGlueXTrackID;
    std::vector<BCALincidentParticle> fBCALincidentParticle;
 
+   static int fWriteNoHitEvents;
+   static long int *fStartingSeeds;
+
  private:
    GlueXUserEventInformation(const GlueXUserEventInformation &src);
    GlueXUserEventInformation &operator=(const GlueXUserEventInformation &src);
+
+   std::map<std::string, std::fstream*> fDlogfile;
+   std::map<std::string, int> fDlogreading;
+   long int fEventSeeds[2];
+   long int fEventSequenceNo;
+
+   static G4Mutex fMutex;
 };
 
 class BCALincidentParticle {
