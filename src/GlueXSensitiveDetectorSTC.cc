@@ -233,7 +233,6 @@ G4bool GlueXSensitiveDetectorSTC::ProcessHits(G4Step* step,
          fPointsMap->add(key, newPoint);
       }
    }
-
    // Post the hit to the hits map, ordered by sector index
 
    if (dEsum > 0) {
@@ -326,7 +325,8 @@ G4bool GlueXSensitiveDetectorSTC::ProcessHits(G4Step* step,
              << G4endl;
       }
    }
-   return true;
+ 
+  return true;
 }
 
 void GlueXSensitiveDetectorSTC::EndOfEvent(G4HCofThisEvent*)

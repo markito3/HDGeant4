@@ -24,6 +24,7 @@ class GlueXHitCGEMpoint : public G4VHit
 {
  public:
    GlueXHitCGEMpoint() {}
+   GlueXHitCGEMpoint(int layer);
    GlueXHitCGEMpoint(const GlueXHitCGEMpoint &src);
    int operator==(const GlueXHitCGEMpoint &right) const;
    GlueXHitCGEMpoint &operator+=(const GlueXHitCGEMpoint &right);
@@ -34,9 +35,11 @@ class GlueXHitCGEMpoint : public G4VHit
    void Draw() const;
    void Print() const;
 
-   // no reason to hide hit data
- 
-   G4double E_GeV;       // total energy (GeV) of this track at this point
+   G4int layer_;        // CGEM layer, count from upstream starting at 1
+
+   G4double E_GeV;       // energy of primary track at point
+   G4double dEdx_GeV_cm; // dE/dx (GeV/cm) of this track inside straw
+   G4double dradius_cm;  // track distance (cm) of closest approach to wire
    G4bool primary_;      // true if track belongs to from a primary particle
    G4int ptype_G3;       // G3 type of particle making this track
    G4double px_GeV;      // momentum (GeV/c) of track at point, x component

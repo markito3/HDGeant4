@@ -362,7 +362,7 @@ void GlueXDetectorConstruction::ConstructSDandField()
          }
          iter->second->SetSensitiveDetector(fcalInsertHandler);
       }
-     else if (volname == "CGEM") {
+     else if (volname == "Conv" || volname == "Tra1" || volname == "Tra2") {
          if (cgemHandler == 0) {
             cgemHandler = new GlueXSensitiveDetectorCGEM("cgem");
             SDman->AddNewDetector(cgemHandler);

@@ -201,14 +201,14 @@ G4bool GlueXSensitiveDetectorCCAL::ProcessHits(G4Step* step,
       }
       if (merge_hit) {
          // Use the time from the earlier hit but add the energy deposition
-         hiter->E_GeV += dEcorr/GeV;
+	 hiter->E_GeV += dEcorr/GeV;
          if (hiter->t_ns*ns > tcorr) {
             hiter->t_ns = tcorr/ns;
          }
       }
       else if ((int)block->hits.size() < MAX_HITS) {
          // create new hit 
-          hiter = block->hits.insert(hiter, GlueXHitCCALblock::hitinfo_t());
+         hiter = block->hits.insert(hiter, GlueXHitCCALblock::hitinfo_t());
          hiter->E_GeV = dEcorr/GeV;
          hiter->t_ns = tcorr/ns;
       }
@@ -272,7 +272,7 @@ void GlueXSensitiveDetectorCCAL::EndOfEvent(G4HCofThisEvent*)
       std::vector<GlueXHitCCALblock::hitinfo_t> &hits = biter->second->hits;
       // apply a pulse height threshold cut
       for (unsigned int ih=0; ih < hits.size(); ++ih) {
-         if (hits[ih].E_GeV <= THRESH_MEV/1e3) {
+	if (hits[ih].E_GeV <= THRESH_MEV/1e3) {
             hits.erase(hits.begin() + ih);
             --ih;
          }
