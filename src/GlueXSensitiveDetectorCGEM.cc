@@ -33,7 +33,7 @@ int GlueXSensitiveDetectorCGEM::instanceCount = 0;
 // Cutoff on the total number of allowed hits
 int GlueXSensitiveDetectorCGEM::MAX_HITS = 1000;
 // Minimum hit time difference for two hits on the same cell
-double GlueXSensitiveDetectorCGEM::TWO_HIT_TIME_RESOL = 25*ns;
+double GlueXSensitiveDetectorCGEM::TWO_HIT_TIME_RESOL = 0.05*ns;
 // Minimum energy deposition for a hit
 double GlueXSensitiveDetectorCGEM::THRESH_MEV = 0.005;
 
@@ -152,28 +152,28 @@ G4bool GlueXSensitiveDetectorCGEM::ProcessHits(G4Step* step,
      G4int key = fPointsMap->entries();
      GlueXHitCGEMpoint* lastPoint = (*fPointsMap)[key - 1];
      // Limit CGEM truthPoints to one per layer
-     if (lastPoint == 0 || lastPoint->track_ != trackID ||
-	 lastPoint->layer_ != layerNo)
-       {
-         GlueXHitCGEMpoint newPoint(layer);
-         newPoint.primary_ = (track->GetParentID() == 0);
-         newPoint.track_ = trackID;
-         newPoint.x_cm = xout[0]/cm;
-         newPoint.y_cm = xout[1]/cm;
-         newPoint.z_cm = xout[2]/cm;
-         newPoint.t_ns = tout/ns;
-         newPoint.px_GeV = pin[0]/GeV;
-         newPoint.py_GeV = pin[1]/GeV;
-         newPoint.pz_GeV = pin[2]/GeV;
-         newPoint.E_GeV = Ein/GeV;
-	 dradius = sqrt(pow(xout[0], 2) + pow(xout[1], 2));
-         newPoint.dradius_cm = dradius/cm;
-         newPoint.dEdx_GeV_cm = dEdx/(GeV/cm);
-         newPoint.ptype_G3 = g3type;
-         newPoint.trackID_ = itrack;
-         fPointsMap->add(key, newPoint);
-	 trackinfo->SetGlueXHistory(2);
-       }
+     //if (lastPoint == 0 || lastPoint->track_ != trackID ||
+     //lastPoint->layer_ != layerNo)
+     //{
+     GlueXHitCGEMpoint newPoint(layer);
+     newPoint.primary_ = (track->GetParentID() == 0);
+     newPoint.track_ = trackID;
+     newPoint.x_cm = xout[0]/cm;
+     newPoint.y_cm = xout[1]/cm;
+     newPoint.z_cm = xout[2]/cm;
+     newPoint.t_ns = tout/ns;
+     newPoint.px_GeV = pin[0]/GeV;
+     newPoint.py_GeV = pin[1]/GeV;
+     newPoint.pz_GeV = pin[2]/GeV;
+     newPoint.E_GeV = Ein/GeV;
+     dradius = sqrt(pow(xout[0], 2) + pow(xout[1], 2));
+     newPoint.dradius_cm = dradius/cm;
+     newPoint.dEdx_GeV_cm = dEdx/(GeV/cm);
+     newPoint.ptype_G3 = g3type;
+     newPoint.trackID_ = itrack;
+     fPointsMap->add(key, newPoint);
+     trackinfo->SetGlueXHistory(2);
+     //  }
    }
    
    // Post the hit to the hits map, ordered by layer index
@@ -275,9 +275,9 @@ void GlueXSensitiveDetectorCGEM::EndOfEvent(G4HCofThisEvent*)
    if (record->getHitViews().size() == 0) 
       record->getPhysicsEvent().addHitViews();
    hddm_s::HitView &hitview = record->getPhysicsEvent().getHitView();
-   if (hitview.getCGEMs().size() == 0)
-      hitview.addCGEMs();
-   hddm_s::CGEM &cGEM = hitview.getCGEM();
+   if (hitview.getCylindricalGEMs().size() == 0)
+      hitview.addCylindricalGEMs();
+   hddm_s::CylindricalGEM &cGEM = hitview.getCylindricalGEM();
 
    // Collect and output the stcTruthHits
    for (siter = layers->begin(); siter != layers->end(); ++siter) {
@@ -294,7 +294,7 @@ void GlueXSensitiveDetectorCGEM::EndOfEvent(G4HCofThisEvent*)
        hddm_s::CgemLayerList layer = cGEM.addCgemLayers(1);
        layer(0).setLayer(siter->second->layer_);
        for (int ih=0; ih < (int)hits.size(); ++ih) {
-	 hddm_s::CGEMTruthHitList thit = layer(0).addCGEMTruthHits(1);
+	 hddm_s::CgemTruthHitList thit = layer(0).addCgemTruthHits(1);
 	 thit(0).setDE(hits[ih].dE_MeV*MeV/GeV);
 	 thit(0).setT(hits[ih].t_ns);
 	 thit(0).setX(hits[ih].x_cm);
@@ -307,9 +307,9 @@ void GlueXSensitiveDetectorCGEM::EndOfEvent(G4HCofThisEvent*)
    // Collect and output the CGemTruthPoints
 
    int last_layer = -1;
-   hddm_s::CGEMTruthPoint *last_point = 0;
+   hddm_s::CgemTruthPoint *last_point = 0;
    for (piter = points->begin(); piter != points->end(); ++piter) {
-     hddm_s::CGEMTruthPointList point = cGEM.addCGEMTruthPoints(1);
+     hddm_s::CgemTruthPointList point = cGEM.addCgemTruthPoints(1);
      //cout << " in cgem " << piter->second->z_cm << endl;
      point(0).setE(piter->second->E_GeV);
      point(0).setDEdx(piter->second->dEdx_GeV_cm);

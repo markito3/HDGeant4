@@ -14,8 +14,8 @@
 #include "G4VSensitiveDetector.hh"
 #include "G4AutoLock.hh"
 
-#include "GlueXHitCGEMpoint.hh"
 #include "GlueXHitCGEMlayer.hh"
+#include "GlueXHitCGEMpoint.hh"
 
 class G4Step;
 class G4HCofThisEvent;
@@ -37,8 +37,8 @@ private:
   double Ei(double x);
   
  private:
-  GlueXHitsMapCGEMpoint* fPointsMap;
   GlueXHitsMapCGEMlayer* fLayersMap;
+  GlueXHitsMapCGEMpoint* fPointsMap;
   
   std::map<G4LogicalVolume*, int> fVolumeTable;
   
