@@ -35,7 +35,7 @@ int GlueXSensitiveDetectorCGEM::MAX_HITS = 1000;
 // Minimum hit time difference for two hits on the same cell
 double GlueXSensitiveDetectorCGEM::TWO_HIT_TIME_RESOL = 0.05*ns;
 // Minimum energy deposition for a hit
-double GlueXSensitiveDetectorCGEM::THRESH_MEV = 0.005;
+double GlueXSensitiveDetectorCGEM::THRESH_MEV = 0.002;
 
 GlueXSensitiveDetectorCGEM::GlueXSensitiveDetectorCGEM(const G4String& name)
  : G4VSensitiveDetector(name), 
