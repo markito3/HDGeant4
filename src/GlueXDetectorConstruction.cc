@@ -304,6 +304,14 @@ void GlueXDetectorConstruction::ConstructSDandField()
          }
          iter->second->SetSensitiveDetector(cdcHandler);
       }
+      else if (volname == "Dri1" || volname == "Dri2" || volname == "Dri3") {
+         if (cgemHandler == 0) {
+            cgemHandler = new GlueXSensitiveDetectorCGEM("cgem");
+            SDman->AddNewDetector(cgemHandler);
+	    cout << "Got here" <<endl;
+         }
+         iter->second->SetSensitiveDetector(cgemHandler);
+      }
       else if (volname == "FDA1" || volname == "FDA2" ||
                volname == "FDA3" || volname == "FDA4")
       {
@@ -361,14 +369,6 @@ void GlueXDetectorConstruction::ConstructSDandField()
 	    cout << "got here" <<endl;
          }
          iter->second->SetSensitiveDetector(fcalInsertHandler);
-      }
-     else if (volname == "Conv" || volname == "Tra1" || volname == "Tra2") {
-         if (cgemHandler == 0) {
-            cgemHandler = new GlueXSensitiveDetectorCGEM("cgem");
-            SDman->AddNewDetector(cgemHandler);
-	    cout << "got here" <<endl;
-         }
-         iter->second->SetSensitiveDetector(cgemHandler);
       }
       else if (volname == "GCAL") {
          if (gcalHandler == 0) {
