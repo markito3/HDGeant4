@@ -31,6 +31,8 @@ PYTHON_CONFIG = python-config
 CPPFLAGS += -I$(HDDS_HOME) -I./src -I./src/G4fixes
 CPPFLAGS += -I./src/G4debug
 CPPFLAGS += -I$(HALLD_RECON_HOME)/$(BMS_OSNAME)/include
+CPPFLAGS += -I$(HDDM_HOME)/include
+CPPFLAGS += -I$(LIBHDDM_HOME)/include
 CPPFLAGS += -I$(JANA_HOME)/include
 CPPFLAGS += -I$(shell root-config --incdir)
 CPPFLAGS += $(shell $(PYTHON_CONFIG) --includes)
@@ -81,17 +83,18 @@ endif
 
 DANALIBS = -L$(HALLD_RECON_HOME)/$(BMS_OSNAME)/lib -lHDGEOMETRY -lDANA \
            -lANALYSIS -lBCAL -lCCAL -lCDC -lCERE -lTRD -lDIRC -lFCAL \
-           -lFDC -lFMWPC -lHDDM -lPAIR_SPECTROMETER -lPID -lRF \
+           -lFDC -lFMWPC -lPAIR_SPECTROMETER -lPID -lRF \
            -lSTART_COUNTER -lTAGGER -lTOF -lTPOL -lTRACKING \
            -lTRIGGER -lDAQ -lTTAB -lEVENTSTORE -lKINFITTER -lTAC \
            -L$(SQLITECPP_HOME)/$(SQLITECPP_LIBDIR) -lSQLiteCpp -L$(SQLITE_HOME)/lib -Wl,-rpath=$(SQLITE_HOME)/lib -lsqlite3 \
-           -lxstream -lbz2 -lz \
            -L/usr/lib64/mysql -lmysqlclient\
            -L$(JANA_HOME)/lib -lJANA \
            -L$(CCDB_HOME)/lib -lccdb \
            -L$(EVIOROOT)/lib -levioxx -levio \
            $(ROOTLIBS) \
            -lpthread -ldl
+
+HDDMLIBS = -L$(HDDM_HOME)/lib -lxstream -lbz2 -lz -L$(LIBHDDM_HOME)/lib -lHDDM
 
 ifdef ETROOT
 DANALIBS += -L$(ETROOT)/lib -let -let_remote
@@ -111,7 +114,7 @@ CPPFLAGS += -DHDF5_SUPPORT -I ${HDF5ROOT}/include
 DANALIBS +=	-L $(HDF5ROOT)/lib -lhdf5_cpp -lhdf5_hl -lhdf5 -lsz -lz -lbz2 -ldl 
 endif
 
-INTYLIBS += -Wl,--whole-archive $(DANALIBS) -Wl,--no-whole-archive
+INTYLIBS += -Wl,--whole-archive $(DANALIBS) $(HDDMLIBS) -Wl,--no-whole-archive
 INTYLIBS += -fPIC -I$(HDDS_HOME) -I$(XERCESCROOT)/include
 INTYLIBS += -L${XERCESCROOT}/lib -lxerces-c
 INTYLIBS += -L$(G4TMPDIR) -lhdds
@@ -224,13 +227,13 @@ $(G4BINDIR)/beamtree: src/utils/beamtree.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ -L$(G4LIBDIR) -lhdgeant4 $(ROOTLIBS) -Wl,-rpath=$(G4LIBDIR)
 
 $(G4BINDIR)/genBH: src/utils/genBH.cc
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ -L$(G4LIBDIR) -lhdgeant4 $(DANALIBS) $(ROOTLIBS) -Wl,-rpath=$(G4LIBDIR)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ -L$(G4LIBDIR) -lhdgeant4 $(DANALIBS) $(HDDMLIBS) $(ROOTLIBS) -Wl,-rpath=$(G4LIBDIR)
 
 $(G4BINDIR)/geneBH: src/utils/geneBH.cc
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ -L$(G4LIBDIR) -lhdgeant4 $(DANALIBS) $(ROOTLIBS) -Wl,-rpath=$(G4LIBDIR)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ -L$(G4LIBDIR) -lhdgeant4 $(DANALIBS) $(HDDMLIBS) $(ROOTLIBS) -Wl,-rpath=$(G4LIBDIR)
 
 $(G4BINDIR)/adapt: src/utils/adapt.cc
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ -L$(G4LIBDIR) -lhdgeant4 $(DANALIBS) $(ROOTLIBS) -Wl,-rpath=$(G4LIBDIR)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^ -L$(G4LIBDIR) -lhdgeant4 $(DANALIBS) $(HDDMLIBS) $(ROOTLIBS) -Wl,-rpath=$(G4LIBDIR)
 
 show_env:
 	@echo PYTHON_VERSION = $(PYTHON_VERSION)
@@ -238,6 +241,7 @@ show_env:
 	@echo PYTHON_MINOR_VERSION = $(PYTHON_MINOR_VERSION)
 	@echo PYTHON_SUBMINOR_VERSION = $(PYTHON_SUBMINOR_VERSION)
 	@echo PYTHON_GE_3 = $(PYTHON_GE_3)
+	@echo HDDMLIBS = $(HDDMLIBS)
 
 diff:
 	diff -q -r ../jlab . -x ".[a-z]*" -x tmp -x bin -x "*.pyc" -x "*.so" -x test -x "*-orig"
