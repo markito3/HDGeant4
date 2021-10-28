@@ -32,7 +32,7 @@ CPPFLAGS += -I$(HDDS_HOME) -I./src -I./src/G4fixes
 CPPFLAGS += -I./src/G4debug
 CPPFLAGS += -I$(HALLD_RECON_HOME)/$(BMS_OSNAME)/include
 CPPFLAGS += -I$(HDDM_HOME)/include
-CPPFLAGS += -I$(LIBHDDM_HOME)/include
+CPPFLAGS += -I$(HD_INTERFACE_HOME)/include
 CPPFLAGS += -I$(JANA_HOME)/include
 CPPFLAGS += -I$(shell root-config --incdir)
 CPPFLAGS += $(shell $(PYTHON_CONFIG) --includes)
@@ -81,20 +81,16 @@ else
     SQLITECPP_LIBDIR = lib64
 endif
 
-DANALIBS = -L$(HALLD_RECON_HOME)/$(BMS_OSNAME)/lib -lHDGEOMETRY -lDANA \
-           -lANALYSIS -lBCAL -lCCAL -lCDC -lCERE -lTRD -lDIRC -lFCAL \
-           -lFDC -lFMWPC -lPAIR_SPECTROMETER -lPID -lRF \
-           -lSTART_COUNTER -lTAGGER -lTOF -lTPOL -lTRACKING \
-           -lTRIGGER -lDAQ -lTTAB -lEVENTSTORE -lKINFITTER -lTAC \
-           -L$(SQLITECPP_HOME)/$(SQLITECPP_LIBDIR) -lSQLiteCpp -L$(SQLITE_HOME)/lib -Wl,-rpath=$(SQLITE_HOME)/lib -lsqlite3 \
-           -L/usr/lib64/mysql -lmysqlclient\
+DANALIBS = -L$(SQLITECPP_HOME)/$(SQLITECPP_LIBDIR) -lSQLiteCpp -L$(SQLITE_HOME)/lib -Wl,-rpath=$(SQLITE_HOME)/lib -lsqlite3 \
+           -L/usr/lib64/mysql -lmysqlclient \
+	   -L$(HD_INTERFACE_HOME)/lib -lHD_INTERFACE \
            -L$(JANA_HOME)/lib -lJANA \
            -L$(CCDB_HOME)/lib -lccdb \
            -L$(EVIOROOT)/lib -levioxx -levio \
            $(ROOTLIBS) \
            -lpthread -ldl
 
-HDDMLIBS = -L$(HDDM_HOME)/lib -lxstream -lbz2 -lz -L$(LIBHDDM_HOME)/lib -lHDDM
+HDDMLIBS = -L$(HDDM_HOME)/lib -lxstream -lbz2 -lz
 
 ifdef ETROOT
 DANALIBS += -L$(ETROOT)/lib -let -let_remote
